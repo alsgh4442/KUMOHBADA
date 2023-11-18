@@ -222,10 +222,8 @@ class ChatTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('챗 탭 내용'),
-      ),
+    return const Center(
+      child: Text('챗 탭 내용'),
     );
   }
 }
