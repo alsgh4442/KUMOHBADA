@@ -1,6 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
+import 'package:image_picker/image_picker.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -10,14 +12,13 @@ Future<void> main() async {
   );
   runApp(const MyApp());
 }
-//////페이지 이동을 위한 상수 및 함수////////////t//////////////////////////////////
+//////페이지 이동을 위한 상수 및 함수//////////////////////////////////////////////
 const String HOMESUB = "homesub";
 const String CHATSUB = "chatsub";
 const String FLOATSUB = "floatsub";
 const String CATEGORYSUB = "categorysub";
 const String ALERTSUB = "alertsub";
 const String SEARCHSUB = "searchsub";
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -90,18 +91,22 @@ class _MyStatefulPageState extends State<MyStatefulPage> {
             icon: const Icon(Icons.menu, color: Colors.black),
             onPressed: () {
               // 목록 버튼을 눌렀을 때 수행할 동작을 추가
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CategoryScreen()),
+              );
             },
           ),
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
             onPressed: () {
-              gotoSub(context,SEARCHSUB,selectedLocation);
+              gotoSub(context, SEARCHSUB, selectedLocation);
             },
           ),
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.black),
             onPressed: () {
-              gotoSub(context,ALERTSUB);
+              gotoSub(context, ALERTSUB);
             },
           ),
         ],
@@ -156,7 +161,8 @@ class _MyStatefulPageState extends State<MyStatefulPage> {
   }
 }
 
-Function gotoSub = (BuildContext context, String cls, [String? selectedLocation]) {
+Function gotoSub =
+    (BuildContext context, String cls, [String? selectedLocation]) {
   switch (cls) {
     // case HOMESUB:
     //   Navigator.push(context,
@@ -176,19 +182,20 @@ Function gotoSub = (BuildContext context, String cls, [String? selectedLocation]
     //   break;
     case ALERTSUB:
       Navigator.push(
-          context, MaterialPageRoute(builder: (context) => AlertSub()));
+          context, MaterialPageRoute(builder: (context) => const AlertSub()));
       break;
     case SEARCHSUB:
-       Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SearchSub(selectedLocation: selectedLocation)),
-              );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                SearchSub(selectedLocation: selectedLocation)),
+      );
       break;
     default:
       break;
   }
 };
-
 
 class HomeTabContent extends StatelessWidget {
   const HomeTabContent({super.key});
@@ -201,8 +208,10 @@ class HomeTabContent extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // FAB를 눌렀을 때 수행할 동작을 여기에 추가하세요.
-          // 예를 들면, 새로운 작업을 추가하거나 화면을 열 수 있습니다.
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WritingPage()),
+          );
         },
         backgroundColor: Colors.orange,
         child: const Icon(Icons.add),
@@ -218,20 +227,8 @@ class ChatTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: const Center(
-        child: Text('챗 탭 내용'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // FAB를 눌렀을 때 수행할 동작을 여기에 추가하세요.
-          // 예를 들면, 새로운 작업을 추가하거나 화면을 열 수 있습니다.
-        },
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.endFloat, // FAB 위치 설정
+    return const Center(
+      child: Text('챗 탭 내용'),
     );
   }
 }
@@ -249,12 +246,13 @@ class ProfileTabContent extends StatelessWidget {
 
 class SearchSub extends StatelessWidget {
   final String? selectedLocation;
-   const SearchSub({Key? key, required this.selectedLocation}) : super(key: key);
+  const SearchSub({Key? key, required this.selectedLocation}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // ignore: no_leading_underscores_for_local_identifiers
-    TextEditingController _controller = TextEditingController(text: '$selectedLocation 근처에서 검색');
+    TextEditingController _controller =
+        TextEditingController(text: '$selectedLocation 근처에서 검색');
 
     return Scaffold(
       appBar: AppBar(
@@ -274,13 +272,13 @@ class SearchSub extends StatelessWidget {
           ),
         ),
       ),
-
     );
   }
 }
 
-
 class AlertSub extends StatelessWidget {
+  const AlertSub({super.key});
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -321,5 +319,211 @@ class AlertSub extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class WritingPage extends StatefulWidget {
+  const WritingPage({Key? key}) : super(key: key);
+
+  @override
+  _WritingPageState createState() => _WritingPageState();
+}
+
+class _WritingPageState extends State<WritingPage> {
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController priceController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+
+  File? _image;
+
+  // 이미지를 갤러리에서 선택하는 함수
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
+  // 글을 제출하는 함수
+  void _submit() {
+    // 여기에 글을 제출하는 로직을 추가하세요.
+    String title = titleController.text;
+    String price = priceController.text;
+    String description = descriptionController.text;
+
+    // _image 변수에 선택한 이미지 파일이 있습니다.
+    // title, price, description 등을 활용하여 글을 서버에 업로드하거나 다른 작업을 수행할 수 있습니다.
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('글 작성'),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(width: 16),
+              // 이미지 선택 버튼
+              if (_image == null)
+                SizedBox(
+                  height: 100.0,
+                  width: 100.0,
+                  child: Center(
+                    child: ElevatedButton(
+                      onPressed: _pickImage,
+                      child: const Text('이미지 선택'),
+                    ),
+                  ),
+                ),
+              // 선택한 이미지 표시
+              if (_image != null)
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: SizedBox(
+                    height: 100.0,
+                    width: 100.0,
+                    child: Center(
+                      child: Image.file(
+                        _image!,
+                        fit: BoxFit.scaleDown,
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 8),
+              // 제목 입력 필드
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: titleController,
+                        decoration: const InputDecoration(
+                          labelText: '제목',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // 가격 입력 필드
+                      TextField(
+                        controller: priceController,
+                        decoration: const InputDecoration(
+                          labelText: '가격',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // 설명 입력 필드
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: TextField(
+                controller: descriptionController,
+                maxLines: null, // 가변적인 높이를 가지도록 설정
+                expands: true, // 입력 내용에 따라 세로로 늘어나도록 설정
+                decoration: const InputDecoration(
+                  labelText: '설명',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ElevatedButton(
+              onPressed: _submit,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16.0),
+                minimumSize: Size(screenWidth, 0),
+              ),
+              child: const Text('제출'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CategoryScreen extends StatelessWidget {
+  CategoryScreen({Key? key}) : super(key: key);
+
+  final Map<String, String> categoryImages = {
+    '디지털기기': 'assets/images/digital_device.png', // 0
+    '가구/인테리어': 'assets/images/furniture_interior.png', // 1
+    '유아동': 'assets/images/baby_product.png', // 2
+    '여성의류': 'assets/images/female_clothes.png', // 3
+    '여성잡화': 'assets/images/female_goods.png', // 4
+    '남성패션/잡화': 'assets/images/male_clothes_goods.png', // 5
+    '생활가전': 'assets/images/electric_appliance.png', // 6
+    '생활/주방': 'assets/images/kitchenware.png', // 7
+    '가공식품': 'assets/images/canned_food.png', // 8
+    '스포츠/레저': 'assets/images/sports_leisure.png', // 9
+    '취미/게임/음반': 'assets/images/hobby_game_music.png', // 10
+    '뷰티/미용': 'assets/images/beauty.png', // 11
+    '식물': 'assets/images/plant.png', // 12
+    '반려동물용품': 'assets/images/pet_supplies.png', // 13
+    '티켓/교환권': 'assets/images/ticket.png', // 14
+    '도서': 'assets/images/book.png', // 15
+    '유아도서': 'assets/images/baby_book.png', // 16
+    '기타 중고물품': 'assets/images/others.png', // 17
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('카테고리'),
+      ),
+      body: ListView.builder(
+        itemCount: categoryImages.length,
+        itemBuilder: (BuildContext context, int index) {
+          final category = categoryImages.keys.elementAt(index);
+          final imagePath = categoryImages[category];
+          return ListTile(
+            leading: imagePath != null
+                ? Image.asset(
+                    imagePath,
+                    height: 24, // Adjust the height as needed
+                    width: 24, // Adjust the width as needed
+                  )
+                : const Icon(Icons
+                    .error), // Placeholder icon in case image path is not valid
+            title: Text(category),
+            onTap: () {
+              _handleCategorySelection(context, category, index);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _handleCategorySelection(
+      BuildContext context, String selectedCategory, int index) {
+    Navigator.pop(context, {'category': selectedCategory, 'index': index});
   }
 }
