@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:image_picker/image_picker.dart';
 import 'firebase_options.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -202,24 +203,45 @@ class HomeTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    CollectionReference products = FirebaseFirestore.instance.collection('product');
+
     return Scaffold(
-      body: const Center(
-        child: Text('홈 탭 내용'),
+      body: FutureBuilder<QuerySnapshot>(
+        future: products.get(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return Text('Something went wrong');
+          }
+
+          if (snapshot.connectionState == ConnectionState.done) {
+            return ListView.builder(
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (BuildContext context, int index) {
+                Map<String, dynamic> product = snapshot.data!.docs[index].data()! as Map<String, dynamic>;
+                return Card(
+                  child: ListTile(
+                    //leading: Image.network(product['imageUrl']), // Assuming each product document has an 'imageUrl' field
+                    title: Text(product['name']),
+                    subtitle: Text('\₩${product['price']}'), // Assuming each product document has a 'price' field
+                    // Add more fields as needed
+                  ),
+                );
+              },
+            );
+          }
+
+          return Center(child: CircularProgressIndicator());
+        },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const WritingPage()),
-          );
-        },
+        onPressed: () {},
         backgroundColor: Colors.orange,
         child: const Icon(Icons.add),
       ),
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.endFloat, // FAB 위치 설정
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
+
 }
 
 class ChatTabContent extends StatelessWidget {
