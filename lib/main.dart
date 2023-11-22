@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -13,6 +14,7 @@ Future<void> main() async {
   );
   runApp(const MyApp());
 }
+
 //////페이지 이동을 위한 상수 및 함수//////////////////////////////////////////////
 const String HOMESUB = "homesub";
 const String CHATSUB = "chatsub";
@@ -203,7 +205,8 @@ class HomeTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    CollectionReference products = FirebaseFirestore.instance.collection('product');
+    CollectionReference products =
+        FirebaseFirestore.instance.collection('product');
 
     return Scaffold(
       body: FutureBuilder<QuerySnapshot>(
@@ -213,32 +216,33 @@ class HomeTabContent extends StatelessWidget {
             return Text('Something went wrong');
           }
 
-      if (snapshot.connectionState == ConnectionState.done) {
-  return ListView.builder(
-    itemCount: snapshot.data!.docs.length,
-    itemBuilder: (BuildContext context, int index) {
-      Map<String, dynamic> product = snapshot.data!.docs[index].data()! as Map<String, dynamic>;
+          if (snapshot.connectionState == ConnectionState.done) {
+            return ListView.builder(
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (BuildContext context, int index) {
+                Map<String, dynamic> product =
+                    snapshot.data!.docs[index].data()! as Map<String, dynamic>;
 
-      // Convert the timestamp to a more readable format
-      DateTime date = (product['time'] as Timestamp).toDate();
-      String formattedTime = timeago.format(date, locale: 'ko');
+                // Convert the timestamp to a more readable format
+                DateTime date = (product['time'] as Timestamp).toDate();
+                String formattedTime = timeago.format(date, locale: 'ko');
 
-      return Card(
-        child: ListTile(
-          //leading: Image.network(product['imageUrl']), // Assuming each product document has an 'imageUrl' field
-          title: Text(product['title']), // Assuming each product document has a 'title' field
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text('${product['location']} · $formattedTime'), // Assuming each product document has a 'location' and 'time' field
-              Text('${product['price']}원'), // Assuming each product document has a 'price' field
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
+                return Card(
+                  child: ListTile(
+                    leading: Image.network(product['imageUrl']),
+                    title: Text(product['title'],style:const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), 
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text('${product['location']} · $formattedTime'), 
+                        Text('${product['price']}원',style: const TextStyle(color: Colors.black)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }
           return Center(child: CircularProgressIndicator());
         },
       ),
@@ -250,7 +254,6 @@ class HomeTabContent extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
-
 }
 
 class ChatTabContent extends StatelessWidget {
