@@ -5,7 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:image_picker/image_picker.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:timeago/timeago.dart' as timeago;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -213,23 +213,32 @@ class HomeTabContent extends StatelessWidget {
             return Text('Something went wrong');
           }
 
-          if (snapshot.connectionState == ConnectionState.done) {
-            return ListView.builder(
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (BuildContext context, int index) {
-                Map<String, dynamic> product = snapshot.data!.docs[index].data()! as Map<String, dynamic>;
-                return Card(
-                  child: ListTile(
-                    //leading: Image.network(product['imageUrl']), // Assuming each product document has an 'imageUrl' field
-                    title: Text(product['name']),
-                    subtitle: Text('\₩${product['price']}'), // Assuming each product document has a 'price' field
-                    // Add more fields as needed
-                  ),
-                );
-              },
-            );
-          }
+      if (snapshot.connectionState == ConnectionState.done) {
+  return ListView.builder(
+    itemCount: snapshot.data!.docs.length,
+    itemBuilder: (BuildContext context, int index) {
+      Map<String, dynamic> product = snapshot.data!.docs[index].data()! as Map<String, dynamic>;
 
+      // Convert the timestamp to a more readable format
+      DateTime date = (product['time'] as Timestamp).toDate();
+      String formattedTime = timeago.format(date, locale: 'ko');
+
+      return Card(
+        child: ListTile(
+          //leading: Image.network(product['imageUrl']), // Assuming each product document has an 'imageUrl' field
+          title: Text(product['title']), // Assuming each product document has a 'title' field
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('${product['location']} · $formattedTime'), // Assuming each product document has a 'location' and 'time' field
+              Text('${product['price']}원'), // Assuming each product document has a 'price' field
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
           return Center(child: CircularProgressIndicator());
         },
       ),
