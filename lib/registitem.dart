@@ -1,7 +1,7 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'category.dart'; // 카테고리 스크린을 import
 
 class WritingPage extends StatefulWidget {
   const WritingPage({Key? key}) : super(key: key);
@@ -16,6 +16,7 @@ class _WritingPageState extends State<WritingPage> {
   final TextEditingController descriptionController = TextEditingController();
 
   File? _image;
+  String _selectedCategory = '디지털기기'; // 선택된 카테고리를 저장할 변수
 
   // 이미지를 갤러리에서 선택하는 함수
   Future<void> _pickImage() async {
@@ -39,7 +40,23 @@ class _WritingPageState extends State<WritingPage> {
 
     // _image 변수에 선택한 이미지 파일이 있습니다.
     // title, price, description 등을 활용하여 글을 서버에 업로드하거나 다른 작업을 수행할 수 있습니다.
+    // _selectedCategory 변수에 선택된 카테고리가 있습니다.
+
     Navigator.pop(context);
+  }
+
+  // 카테고리를 선택하는 함수
+  Future<void> _selectCategory() async {
+    final Map<String, dynamic>? result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CategoryScreen()),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedCategory = result['category'];
+      });
+    }
   }
 
   @override
@@ -93,6 +110,7 @@ class _WritingPageState extends State<WritingPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // 제목 입력 필드
                       TextField(
                         controller: titleController,
                         decoration: const InputDecoration(
@@ -114,6 +132,25 @@ class _WritingPageState extends State<WritingPage> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          // 카테고리 선택 부분
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 5.0),
+            child: Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _selectCategory,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18.0), // 버튼 내부의 내용과의 간격 조절
+                  ),
+                  child: const Text('카테고리 선택'),
+                ),
+                const SizedBox(width: 8),
+                Text('선택된 카테고리: $_selectedCategory'),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           // 설명 입력 필드

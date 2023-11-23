@@ -14,7 +14,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
     //위젯 빌드 함수
     Widget? buildListView(context, index) {
       return ListTile(
-        leading: Image.asset("images/EmptyImage.png"),
+        leading: Image.asset("assets/images/baby_book.png"),
         onTap: () {
           Navigator.push(
             context,
