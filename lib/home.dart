@@ -60,12 +60,12 @@ class HomeTabSub extends StatelessWidget {
         foregroundColor: Colors.black,
       ),
       body: ListView(children: [
-        Image.asset("images/EmptyImage.png"),
+        Image.asset("assets/images/baby_book.png"),
         Card(
           child: Row(children: [
             CircleAvatar(
               backgroundColor: Colors.white,
-              child: Image.asset("images/EmptyProfileImage.png"),
+              child: Image.asset("assets/images/baby_book.png"),
             ),
             Column(children: [
               Text(item.regitUser.nickname, style: largeText),
