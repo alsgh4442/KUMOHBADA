@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kumohbada/myitems.dart';
 import 'chat.dart';
 import 'home.dart';
 import 'category.dart';
@@ -120,10 +121,17 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _currentBottomIndex = 0;
   String? _selectedLocation = '양호동';
+  bool _showAdditionalButtons = false;
 
   void _tapBottomTab(int index) {
     setState(() {
       _currentBottomIndex = index;
+    });
+  }
+
+  void _toggleAdditionalButtons() {
+    setState(() {
+      _showAdditionalButtons = !_showAdditionalButtons;
     });
   }
 
@@ -194,13 +202,55 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: '내 정보'),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const WritingPage()));
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _currentBottomIndex == 0
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (_showAdditionalButtons)
+                  FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MyItemsTabContent()));
+                    },
+                    tooltip: '내 글 보기',
+                    child: const Icon(Icons.notes),
+                  ),
+                const SizedBox(height: 16.0),
+                if (_showAdditionalButtons)
+                  FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WritingPage(
+                            editItem: null,
+                          ),
+                        ),
+                      ).then((result) {
+                        if (result == true) {
+                          // 화면 refresh
+                          _tabs[0] = const HomeTabContent();
+                          setState(() {});
+                        }
+                      });
+                    },
+                    tooltip: '글쓰기',
+                    child: const Icon(Icons.edit_sharp),
+                  ),
+                const SizedBox(height: 16.0),
+                FloatingActionButton(
+                  onPressed: () {
+                    _toggleAdditionalButtons();
+                  },
+                  child: _showAdditionalButtons
+                      ? const Icon(Icons.remove)
+                      : const Icon(Icons.add),
+                ),
+              ],
+            )
+          : null,
     );
   }
 }
