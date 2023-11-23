@@ -9,6 +9,8 @@ class HomeTabContent extends StatefulWidget {
 }
 
 class _HomeTabContentState extends State<HomeTabContent> {
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
   @override
   Widget build(BuildContext context) {
     //위젯 빌드 함수
@@ -37,13 +39,26 @@ class _HomeTabContentState extends State<HomeTabContent> {
       );
     }
 
-    return ListView.separated(
-      itemCount: items.length,
-      itemBuilder: buildListView,
-      separatorBuilder: (context, index) {
-        return const Divider(color: Colors.black);
-      },
+    return RefreshIndicator(
+      key: _refreshIndicatorKey,
+      onRefresh: _refreshData, // Specify the refresh callback function
+      child: ListView.separated(
+        itemCount: items.length,
+        itemBuilder: buildListView,
+        separatorBuilder: (context, index) {
+          return const Divider(color: Colors.black);
+        },
+      ),
     );
+  }
+
+  Future<void> _refreshData() async {
+    await Future.delayed(const Duration(seconds: 1));
+
+    setState(() {
+      items = items.reversed.toList();
+      _refreshIndicatorKey.currentState?.show(atTop: false);
+    });
   }
 }
 

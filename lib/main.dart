@@ -228,13 +228,7 @@ class _MainPageState extends State<MainPage> {
                             editItem: null,
                           ),
                         ),
-                      ).then((result) {
-                        if (result == true) {
-                          // 화면 refresh
-                          _tabs[0] = const HomeTabContent();
-                          setState(() {});
-                        }
-                      });
+                      );
                     },
                     tooltip: '글쓰기',
                     child: const Icon(Icons.edit_sharp),
