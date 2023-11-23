@@ -110,6 +110,7 @@ class _MyStatefulPageState extends State<MyStatefulPage> {
             icon: const Icon(Icons.notifications, color: Colors.black),
             onPressed: () {
               gotoSub(context, ALERTSUB);
+              gotoSub(context, ALERTSUB);
             },
           ),
         ],
@@ -247,7 +248,10 @@ class HomeTabContent extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          // FAB를 눌렀을 때 수행할 동작을 여기에 추가하세요.
+          // 예를 들면, 새로운 작업을 추가하거나 화면을 열 수 있습니다.
+        },
         backgroundColor: Colors.orange,
         child: const Icon(Icons.add),
       ),
