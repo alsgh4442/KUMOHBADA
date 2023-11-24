@@ -56,7 +56,6 @@ class _HomeTabContentState extends State<HomeTabContent> {
     await Future.delayed(const Duration(seconds: 1));
 
     setState(() {
-      items = items.reversed.toList();
       _refreshIndicatorKey.currentState?.show(atTop: false);
     });
   }

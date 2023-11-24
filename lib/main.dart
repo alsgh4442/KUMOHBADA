@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kumohbada/myitems.dart';
+import 'package:kumohbada/profile.dart';
 import 'chat.dart';
 import 'home.dart';
 import 'category.dart';
@@ -43,7 +44,6 @@ final List<String> _availableLocations = [
   '칠곡',
   '진미동',
   '인동동',
-  '양포동',
   '임오동',
   '도량동',
   '지산동',
@@ -245,17 +245,6 @@ class _MainPageState extends State<MainPage> {
               ],
             )
           : null,
-    );
-  }
-}
-
-class ProfileTabContent extends StatelessWidget {
-  const ProfileTabContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('프로필 탭 내용'),
     );
   }
 }

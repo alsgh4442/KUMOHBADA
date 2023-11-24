@@ -47,7 +47,6 @@ class _WritingPageState extends State<WritingPage> {
     }
   }
 
-  // 글을 제출하는 함수
   // 글을 제출 또는 수정하는 함수
   void _submit() {
     String title = titleController.text;
