@@ -80,14 +80,21 @@ class _WritingPageState extends State<WritingPage> {
 
   // 카테고리를 선택하는 함수
   Future<void> _selectCategory() async {
-    final Map<String, dynamic>? result = await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CategoryScreen()),
     );
 
     if (result != null) {
       setState(() {
-        _selectedCategory = result['category'];
+        if (result is String) {
+          // Handle the case where result is a String
+          _selectedCategory = result;
+        } else if (result is Map<String, dynamic> &&
+            result.containsKey('category')) {
+          // Handle the case where result is a Map and contains 'category' key
+          _selectedCategory = result['category'];
+        }
       });
     }
   }

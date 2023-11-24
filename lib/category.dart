@@ -47,6 +47,7 @@ class CategoryScreen extends StatelessWidget {
                     .error), // Placeholder icon in case image path is not valid
             title: Text(category),
             onTap: () {
+              print(category);
               Navigator.pop(context, category);
             },
           );
