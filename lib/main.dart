@@ -89,9 +89,9 @@ class Item {
 }
 
 List<Item> items = [
-  Item("감자팝니다", "A", 10000, "상태 좋음", "regiTime", users[0]),
-  Item("양파팝니다", "B", 20000, "상태 보통", "regiTime", users[1]),
-  Item("적양파팝니다", "B", 30000, "상태 보통", "regiTime", users[1]),
+  Item("감자팝니다", "디지털기기", 10000, "상태 좋음", "regiTime", users[0]),
+  Item("양파팝니다", "가공식품", 20000, "상태 보통", "regiTime", users[1]),
+  Item("적양파팝니다", "가공식품", 30000, "상태 보통", "regiTime", users[1]),
 ];
 
 //서식//////////////////////////////////////////////////////////////////////////
@@ -122,6 +122,7 @@ class _MainPageState extends State<MainPage> {
   int _currentBottomIndex = 0;
   String? _selectedLocation = '양호동';
   bool _showAdditionalButtons = false;
+  String _selectedCategory = '전체';
 
   void _tapBottomTab(int index) {
     setState(() {
@@ -135,12 +136,6 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  final List<Widget> _tabs = [
-    const HomeTabContent(),
-    const ChatTabContent(),
-    const ProfileTabContent(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     //위젯 생성 함수
@@ -151,6 +146,12 @@ class _MainPageState extends State<MainPage> {
       }
       return popUpList;
     }
+
+    final List<Widget> tabs = [
+      HomeTabContent(selectedCategory: _selectedCategory),
+      const ChatTabContent(),
+      const ProfileTabContent(),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -173,9 +174,18 @@ class _MainPageState extends State<MainPage> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => CategoryScreen()));
+            onPressed: () async {
+              final selectedCategory = await Navigator.push<String>(
+                context,
+                MaterialPageRoute(builder: (context) => CategoryScreen()),
+              );
+
+              // 카테고리 선택이 이루어졌을 때만 필터링 적용
+              if (selectedCategory != null) {
+                setState(() {
+                  _selectedCategory = selectedCategory;
+                });
+              }
             },
           ),
           IconButton(
@@ -192,7 +202,7 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
       ),
-      body: _tabs[_currentBottomIndex],
+      body: tabs[_currentBottomIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentBottomIndex,
         onTap: _tapBottomTab,

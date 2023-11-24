@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:kumohbada/main.dart';
 
 class HomeTabContent extends StatefulWidget {
-  const HomeTabContent({super.key});
+  final String selectedCategory;
+  const HomeTabContent({Key? key, required this.selectedCategory})
+      : super(key: key);
 
   @override
   State<HomeTabContent> createState() => _HomeTabContentState();
@@ -11,40 +13,84 @@ class HomeTabContent extends StatefulWidget {
 class _HomeTabContentState extends State<HomeTabContent> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
+
   @override
   Widget build(BuildContext context) {
     //위젯 빌드 함수
-    Widget? buildListView(context, index) {
-      return ListTile(
-        leading: Image.asset("assets/images/baby_book.png"),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => HomeTabSub(item: items[index])),
+    List<Widget> buildListView() {
+      // 필터링된 아이템 리스트
+      List<Widget> filteredItems = [];
+
+      // 선택된 카테고리가 "전체"인 경우 모든 아이템을 보여줍니다.
+      if (widget.selectedCategory == '전체') {
+        for (var index = 0; index < items.length; index++) {
+          filteredItems.add(
+            ListTile(
+              leading: Image.asset("assets/images/baby_book.png"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HomeTabSub(item: items[index]),
+                  ),
+                );
+              },
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(items[index].title, style: largeText),
+                  Text(items[index].price.toString(), style: boldText)
+                ],
+              ),
+              subtitle: Row(children: [
+                Text(items[index].regitUser.location),
+                const Spacer(),
+                Text(items[index].regiTime),
+              ]),
+            ),
           );
-        },
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(items[index].title, style: largeText),
-            Text(items[index].price.toString(), style: boldText)
-          ],
-        ),
-        subtitle: Row(children: [
-          Text(items[index].regitUser.location),
-          const Spacer(),
-          Text(items[index].regiTime)
-        ]),
-      );
+        }
+      } else {
+        // 선택된 카테고리에 맞는 아이템만 필터링하여 보여줍니다.
+        for (var index = 0; index < items.length; index++) {
+          if (items[index].category == widget.selectedCategory) {
+            filteredItems.add(
+              ListTile(
+                leading: Image.asset("assets/images/baby_book.png"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HomeTabSub(item: items[index]),
+                    ),
+                  );
+                },
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(items[index].title, style: largeText),
+                    Text(items[index].price.toString(), style: boldText)
+                  ],
+                ),
+                subtitle: Row(children: [
+                  Text(items[index].regitUser.location),
+                  const Spacer(),
+                  Text(items[index].regiTime),
+                ]),
+              ),
+            );
+          }
+        }
+      }
+      return filteredItems;
     }
 
     return RefreshIndicator(
       key: _refreshIndicatorKey,
-      onRefresh: _refreshData, // Specify the refresh callback function
+      onRefresh: refreshData,
       child: ListView.separated(
-        itemCount: items.length,
-        itemBuilder: buildListView,
+        itemCount: buildListView().length,
+        itemBuilder: (context, index) => buildListView()[index],
         separatorBuilder: (context, index) {
           return const Divider(color: Colors.black);
         },
@@ -52,7 +98,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
     );
   }
 
-  Future<void> _refreshData() async {
+  Future<void> refreshData() async {
     await Future.delayed(const Duration(seconds: 1));
 
     setState(() {
