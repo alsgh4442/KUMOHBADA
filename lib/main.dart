@@ -155,6 +155,7 @@ class _MainPageState extends State<MainPage> {
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0.0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         title: PopupMenuButton(
