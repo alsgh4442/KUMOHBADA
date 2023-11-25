@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kumohbada/main.dart';
 import 'category.dart'; // 카테고리 스크린을 import
 
 class WritingPage extends StatefulWidget {
-  const WritingPage({Key? key}) : super(key: key);
+  final Item? editItem; // 편집 중인 아이템을 저장하는 속성 추가
+  const WritingPage({Key? key, this.editItem}) : super(key: key);
 
   @override
   _WritingPageState createState() => _WritingPageState();
@@ -17,6 +19,20 @@ class _WritingPageState extends State<WritingPage> {
 
   File? _image;
   String _selectedCategory = '디지털기기'; // 선택된 카테고리를 저장할 변수
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 편집 중이면 기존 데이터로 필드를 채웁니다.
+    if (widget.editItem != null) {
+      Item editItem = widget.editItem!;
+      titleController.text = editItem.title;
+      priceController.text = editItem.price.toString();
+      descriptionController.text = editItem.describtion;
+      _selectedCategory = editItem.category;
+    }
+  }
 
   // 이미지를 갤러리에서 선택하는 함수
   Future<void> _pickImage() async {
@@ -31,30 +47,54 @@ class _WritingPageState extends State<WritingPage> {
     }
   }
 
-  // 글을 제출하는 함수
+  // 글을 제출 또는 수정하는 함수
   void _submit() {
-    // 여기에 글을 제출하는 로직을 추가하세요.
     String title = titleController.text;
     String price = priceController.text;
     String description = descriptionController.text;
 
-    // _image 변수에 선택한 이미지 파일이 있습니다.
-    // title, price, description 등을 활용하여 글을 서버에 업로드하거나 다른 작업을 수행할 수 있습니다.
-    // _selectedCategory 변수에 선택된 카테고리가 있습니다.
+    // 이미지, 제목, 가격, 설명, 선택된 카테고리로 새로운 Item 생성
+    Item newItem = Item(
+      title,
+      _selectedCategory,
+      int.parse(price),
+      description,
+      DateTime.now().toString(), // 현재 시간으로 설정 (나중에 서버 시간을 사용하는 것이 좋음)
+      users[0], // 예시로 users[0]을 사용했는데, 실제 사용자 정보로 변경해야 함
+    );
 
-    Navigator.pop(context);
+    // 편집 중인 아이템이 있으면 수정 모드로 처리
+    if (widget.editItem != null) {
+      // 편집 중인 아이템의 인덱스 찾기
+      int editIndex = items.indexOf(widget.editItem!);
+
+      // 해당 인덱스의 아이템을 새로운 아이템으로 교체
+      items[editIndex] = newItem;
+    } else {
+      // 새로운 아이템을 리스트에 추가
+      items.add(newItem);
+    }
+
+    Navigator.pop(context, true);
   }
 
   // 카테고리를 선택하는 함수
   Future<void> _selectCategory() async {
-    final Map<String, dynamic>? result = await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CategoryScreen()),
     );
 
     if (result != null) {
       setState(() {
-        _selectedCategory = result['category'];
+        if (result is String) {
+          // Handle the case where result is a String
+          _selectedCategory = result;
+        } else if (result is Map<String, dynamic> &&
+            result.containsKey('category')) {
+          // Handle the case where result is a Map and contains 'category' key
+          _selectedCategory = result['category'];
+        }
       });
     }
   }
@@ -65,7 +105,7 @@ class _WritingPageState extends State<WritingPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('글 작성'),
+        title: const Text('글쓰기'),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,7 +119,7 @@ class _WritingPageState extends State<WritingPage> {
               if (_image == null)
                 SizedBox(
                   height: 100.0,
-                  width: 100.0,
+                  width: 130.0,
                   child: Center(
                     child: ElevatedButton(
                       onPressed: _pickImage,
@@ -93,7 +133,7 @@ class _WritingPageState extends State<WritingPage> {
                   onTap: _pickImage,
                   child: SizedBox(
                     height: 100.0,
-                    width: 100.0,
+                    width: 130.0,
                     child: Center(
                       child: Image.file(
                         _image!,
@@ -134,23 +174,28 @@ class _WritingPageState extends State<WritingPage> {
             ],
           ),
           const SizedBox(height: 8),
-          // 카테고리 선택 부분
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5.0),
-            child: Row(
-              children: [
-                ElevatedButton(
-                  onPressed: _selectCategory,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18.0), // 버튼 내부의 내용과의 간격 조절
-                  ),
-                  child: const Text('카테고리 선택'),
+          Row(
+            children: [
+              const SizedBox(width: 16),
+              // 카테고리 선택 부분
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                child: Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: _selectCategory,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18.0), // 버튼 내부의 내용과의 간격 조절
+                      ),
+                      child: const Text('카테고리 선택'),
+                    ),
+                    const SizedBox(width: 16),
+                    Text('선택된 카테고리: $_selectedCategory'),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text('선택된 카테고리: $_selectedCategory'),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           // 설명 입력 필드

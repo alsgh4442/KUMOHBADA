@@ -1,3 +1,4 @@
+all : https://www.flaticon.com/authors/rameshsao
 digital_device : https://www.freepik.com/?_gl=1*1ad15wq*test_ga*MTc1ODI4OTQyLjE3MDAyODg1ODg.*test_ga_523JXC6VL7*MTcwMDI4ODU4OC4xLjEuMTcwMDI4OTQ0Ni4xOC4wLjA.*fp_ga*MTc1ODI4OTQyLjE3MDAyODg1ODg.*fp_ga_1ZY8468CQB*MTcwMDI4ODU4OC4xLjEuMTcwMDI4OTQ0Ni4xOC4wLjA.
 furniture_interior : https://www.flaticon.com/kr/authors/smallsmiles
 baby_product : https://www.freepik.com/?_gl=1*1fw9l3o*test_ga*MTA1MTMwMTQ1Ny4xNzAwMjg2OTI4*test_ga_523JXC6VL7*MTcwMDI4NjkyOC4xLjEuMTcwMDI4NzgyNi40NC4wLjA.*fp_ga*MTA1MTMwMTQ1Ny4xNzAwMjg2OTI4*fp_ga_1ZY8468CQB*MTcwMDI4NjkyOS4xLjEuMTcwMDI4NzgyNi40NC4wLjA.
