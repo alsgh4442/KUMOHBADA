@@ -21,32 +21,54 @@ class _HomeTabContentState extends State<HomeTabContent> {
       // 필터링된 아이템 리스트
       List<Widget> filteredItems = [];
 
-      // 선택된 카테고리가 "전체"인 경우 모든 아이템을 보여줍니다.
+// 선택된 카테고리가 "전체"인 경우 모든 아이템을 보여줍니다.
       if (widget.selectedCategory == '전체') {
         for (var index = 0; index < items.length; index++) {
           filteredItems.add(
-            ListTile(
-              leading: Image.asset("assets/images/baby_book.png"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HomeTabSub(item: items[index]),
+            Card(
+              elevation: 0,
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HomeTabSub(item: items[index]),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Row(
+                    children: <Widget>[
+                      Image.asset(
+                        "assets/images/baby_book.png",
+                        width: 100, // 원하는 너비로 설정하세요.
+                        height: 100, // 원하는 높이로 설정하세요.
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(items[index].title, style: largeText),
+                            SizedBox(height: 5),
+                            Text(items[index].price.toString(),
+                                style: boldText),
+                            SizedBox(height: 5),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(items[index].regitUser.location),
+                                Text(items[index].regiTime),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(items[index].title, style: largeText),
-                  Text(items[index].price.toString(), style: boldText)
-                ],
+                ),
               ),
-              subtitle: Row(children: [
-                Text(items[index].regitUser.location),
-                const Spacer(),
-                Text(items[index].regiTime),
-              ]),
             ),
           );
         }
@@ -92,7 +114,12 @@ class _HomeTabContentState extends State<HomeTabContent> {
         itemCount: buildListView().length,
         itemBuilder: (context, index) => buildListView()[index],
         separatorBuilder: (context, index) {
-          return const Divider(color: Colors.black);
+          return const Divider(
+            color: Color.fromARGB(255, 211, 211, 211), // 색상을 변경하세요.
+            thickness: 1, // 선의 두께를 조절하세요.
+            indent: 20, // 선이 시작하는 위치를 조절하세요.
+            endIndent: 20,
+          );
         },
       ),
     );

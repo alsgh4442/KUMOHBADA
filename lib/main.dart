@@ -4,17 +4,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:kumohbada/category.dart';
 import 'package:kumohbada/registitem.dart';
 import 'firebase_options.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:flutter/material.dart';
+import 'package:kumohbada/myitems.dart';
+import 'package:kumohbada/profile.dart';
+import 'chat.dart';
+import 'home.dart';
+import 'category.dart';
+import 'registitem.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
 //////페이지 이동을 위한 상수 및 함수//////////////////////////////////////////////
 const String FLOATSUB = "floatsub";
@@ -52,7 +50,6 @@ final List<String> _availableLocations = [
   '칠곡',
   '진미동',
   '인동동',
-  '양포동',
   '임오동',
   '도량동',
   '지산동',
@@ -98,9 +95,9 @@ class Item {
 }
 
 List<Item> items = [
-  Item("감자팝니다", "A", 10000, "상태 좋음", "regiTime", users[0]),
-  Item("양파팝니다", "B", 20000, "상태 보통", "regiTime", users[1]),
-  Item("적양파팝니다", "B", 30000, "상태 보통", "regiTime", users[1]),
+  Item("감자팝니다", "디지털기기", 10000, "상태 좋음", "regiTime", users[0]),
+  Item("양파팝니다", "가공식품", 20000, "상태 보통", "regiTime", users[1]),
+  Item("적양파팝니다", "가공식품", 30000, "상태 보통", "regiTime", users[1]),
 ];
 
 //서식//////////////////////////////////////////////////////////////////////////
@@ -130,6 +127,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _currentBottomIndex = 0;
   String? _selectedLocation = '양호동';
+  bool _showAdditionalButtons = false;
+  String _selectedCategory = '전체';
 
   void _tapBottomTab(int index) {
     setState(() {
@@ -137,11 +136,11 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  final List<Widget> _tabs = [
-    const HomeTabContent(),
-    const ChatTabContent(),
-    const ProfileTabContent(),
-  ];
+  void _toggleAdditionalButtons() {
+    setState(() {
+      _showAdditionalButtons = !_showAdditionalButtons;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,8 +153,15 @@ class _MainPageState extends State<MainPage> {
       return popUpList;
     }
 
+    final List<Widget> tabs = [
+      HomeTabContent(selectedCategory: _selectedCategory),
+      const ChatTabContent(),
+      const ProfileTabContent(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
+        elevation:0.0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         title: PopupMenuButton(
@@ -175,9 +181,18 @@ class _MainPageState extends State<MainPage> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => CategoryScreen()));
+            onPressed: () async {
+              final selectedCategory = await Navigator.push<String>(
+                context,
+                MaterialPageRoute(builder: (context) => CategoryScreen()),
+              );
+
+              // 카테고리 선택이 이루어졌을 때만 필터링 적용
+              if (selectedCategory != null) {
+                setState(() {
+                  _selectedCategory = selectedCategory;
+                });
+              }
             },
           ),
           IconButton(
@@ -190,12 +205,11 @@ class _MainPageState extends State<MainPage> {
             icon: const Icon(Icons.notifications, color: Colors.black),
             onPressed: () {
               gotoSub(context, ALERTSUB);
-              gotoSub(context, ALERTSUB);
             },
           ),
         ],
       ),
-      body: _tabs[_currentBottomIndex],
+      body: tabs[_currentBottomIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentBottomIndex,
         onTap: _tapBottomTab,
@@ -205,147 +219,49 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: '내 정보'),
         ],
       ),
-    );
-  }
-
-  void _showLocationMenu(BuildContext context) {
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final Offset offset = renderBox.localToGlobal(Offset.zero);
-
-    showMenu<String>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + kToolbarHeight + 5.0, // 아래에 여백 추가
-        offset.dx + renderBox.size.width,
-        offset.dy + kToolbarHeight + 5.0 + renderBox.size.height, // 아래에 여백 추가
-      ),
-      items: _availableLocations.map((location) {
-        return PopupMenuItem<String>(
-          value: location,
-          child: Text(location),
-        );
-      }).toList(),
-    ).then((location) {
-      if (location != null) {
-        setState(() {
-          _selectedLocation = location;
-        });
-      }
-    });
-  }
-}
-
-Function _gotoSub =
-    (BuildContext context, String cls, [String? selectedLocation]) {
-  switch (cls) {
-    // case HOMESUB:
-    //   Navigator.push(context,
-    //       MaterialPageRoute(builder: (context) => const HomePageSub()));
-    //   break;
-    // case CHATSUB:
-    //   Navigator.push(context,
-    //       MaterialPageRoute(builder: (context) => const ChatPageSub()));
-    //   break;
-    // case FLOATSUB:
-    //   Navigator.push(context,
-    //       MaterialPageRoute(builder: (context) => const FloatingSub()));
-    //   break;
-    // case CATEGORYSUB:
-    //   Navigator.push(context,
-    //       MaterialPageRoute(builder: (context) => const CategorySub()));
-    //   break;
-    case ALERTSUB:
-      Navigator.push(
-          context, MaterialPageRoute(builder: (context) => const AlertSub()));
-      break;
-    case SEARCHSUB:
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                SearchSub(selectedLocation: selectedLocation)),
-      );
-      break;
-    default:
-      break;
-  }
-};
-
-class HomeTabContent extends StatelessWidget {
-  const HomeTabContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    CollectionReference products = FirebaseFirestore.instance.collection('product');
-
-    return Scaffold(
-      body: FutureBuilder<QuerySnapshot>(
-        future: products.get(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return Text('Something went wrong');
-          }
-
-      if (snapshot.connectionState == ConnectionState.done) {
-  return ListView.builder(
-    itemCount: snapshot.data!.docs.length,
-    itemBuilder: (BuildContext context, int index) {
-      Map<String, dynamic> product = snapshot.data!.docs[index].data()! as Map<String, dynamic>;
-
-      // Convert the timestamp to a more readable format
-      DateTime date = (product['time'] as Timestamp).toDate();
-      String formattedTime = timeago.format(date, locale: 'ko');
-
-      return Card(
-        child: ListTile(
-          //leading: Image.network(product['imageUrl']), // Assuming each product document has an 'imageUrl' field
-          title: Text(product['title']), // Assuming each product document has a 'title' field
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text('${product['location']} · $formattedTime'), // Assuming each product document has a 'location' and 'time' field
-              Text('${product['price']}원'), // Assuming each product document has a 'price' field
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-          return Center(child: CircularProgressIndicator());
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {  Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const WritingPage()));},
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-    );
-  }
-}
-
-
-class ChatTabContent extends StatelessWidget {
-  const ChatTabContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('챗 탭 내용'),
-    );
-  }
-}
-
-class ProfileTabContent extends StatelessWidget {
-  const ProfileTabContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('프로필 탭 내용'),
+      floatingActionButton: _currentBottomIndex == 0
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (_showAdditionalButtons)
+                  FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MyItemsTabContent()));
+                    },
+                    tooltip: '내 글 보기',
+                    child: const Icon(Icons.notes),
+                  ),
+                const SizedBox(height: 16.0),
+                if (_showAdditionalButtons)
+                  FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WritingPage(
+                            editItem: null,
+                          ),
+                        ),
+                      );
+                    },
+                    tooltip: '글쓰기',
+                    child: const Icon(Icons.edit_sharp),
+                  ),
+                const SizedBox(height: 16.0),
+                FloatingActionButton(
+                  onPressed: () {
+                    _toggleAdditionalButtons();
+                  },
+                  child: _showAdditionalButtons
+                      ? const Icon(Icons.remove)
+                      : const Icon(Icons.add),
+                ),
+              ],
+            )
+          : null,
     );
   }
 }
