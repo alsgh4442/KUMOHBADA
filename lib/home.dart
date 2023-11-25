@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kumohbada/main.dart';
+import 'package:intl/intl.dart';
 
 class HomeTabContent extends StatefulWidget {
   final String selectedCategory;
@@ -45,23 +47,29 @@ class _HomeTabContentState extends State<HomeTabContent> {
                         width: 100, // 원하는 너비로 설정하세요.
                         height: 100, // 원하는 높이로 설정하세요.
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 5),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(items[index].title, style: largeText),
-                            SizedBox(height: 5),
-                            Text(items[index].price.toString(),
-                                style: boldText),
-                            SizedBox(height: 5),
+                            const SizedBox(height: 5),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                Text(items[index].regitUser.location),
+                                Text(
+                                  items[index].regitUser.location,
+                                ),
+                                const SizedBox(width: 5), // 원하는 너비로 설정하세요.
+                                const Text('•'),
+                                const SizedBox(width: 5), // 원하는 너비로 설정하세요.
                                 Text(items[index].regiTime),
                               ],
                             ),
+                            const SizedBox(height: 5),
+                            Text(
+                                NumberFormat('#,###', 'ko_KR').format(items[index].price) +'원',
+                                style: boldText),
                           ],
                         ),
                       ),
@@ -108,6 +116,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
     }
 
     return RefreshIndicator(
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       key: _refreshIndicatorKey,
       onRefresh: refreshData,
       child: ListView.separated(
