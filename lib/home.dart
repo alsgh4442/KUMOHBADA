@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kumohbada/main.dart';
 import 'package:intl/intl.dart';
-
 class HomeTabContent extends StatefulWidget {
   final String selectedCategory;
   const HomeTabContent({Key? key, required this.selectedCategory})
@@ -68,7 +67,9 @@ class _HomeTabContentState extends State<HomeTabContent> {
                             ),
                             const SizedBox(height: 5),
                             Text(
-                                NumberFormat('#,###', 'ko_KR').format(items[index].price) +'원',
+                                NumberFormat('#,###', 'ko_KR')
+                                        .format(items[index].price) +
+                                    '원',
                                 style: boldText),
                           ],
                         ),
@@ -115,21 +116,24 @@ class _HomeTabContentState extends State<HomeTabContent> {
       return filteredItems;
     }
 
-    return RefreshIndicator(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      key: _refreshIndicatorKey,
-      onRefresh: refreshData,
-      child: ListView.separated(
-        itemCount: buildListView().length,
-        itemBuilder: (context, index) => buildListView()[index],
-        separatorBuilder: (context, index) {
-          return const Divider(
-            color: Color.fromARGB(255, 211, 211, 211), // 색상을 변경하세요.
-            thickness: 1, // 선의 두께를 조절하세요.
-            indent: 20, // 선이 시작하는 위치를 조절하세요.
-            endIndent: 20,
-          );
-        },
+    return Container(
+      color: Colors.white,
+      child: RefreshIndicator(
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        key: _refreshIndicatorKey,
+        onRefresh: refreshData,
+        child: ListView.separated(
+          itemCount: buildListView().length,
+          itemBuilder: (context, index) => buildListView()[index],
+          separatorBuilder: (context, index) {
+            return const Divider(
+              color: Color.fromARGB(255, 211, 211, 211), // 색상을 변경하세요.
+              thickness: 1, // 선의 두께를 조절하세요.
+              indent: 20, // 선이 시작하는 위치를 조절하세요.
+              endIndent: 20,
+            );
+          },
+        ),
       ),
     );
   }
@@ -143,6 +147,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
   }
 }
 
+
 class HomeTabSub extends StatelessWidget {
   Item item;
   HomeTabSub({super.key, required this.item});
@@ -150,43 +155,80 @@ class HomeTabSub extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true, // Add this line
       appBar: AppBar(
         title: Text(item.title),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        elevation: 0, // Set the elevation to 0
       ),
-      body: ListView(children: [
-        Image.asset("assets/images/baby_book.png"),
-        Card(
-          child: Row(children: [
-            CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Image.asset("assets/images/baby_book.png"),
-            ),
-            Column(children: [
-              Text(item.regitUser.nickname, style: largeText),
-              Text(item.regitUser.location),
-            ]),
-            const Spacer(),
-            Column(children: [
-              Text('Star : ${item.regitUser.qi.toString()}'),
-              Text(item.regiTime),
-            ]),
-          ]),
+      body: Container(
+        color: Colors.white, // Set the background color here
+        child: ListView.separated(
+          itemCount: 3,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return Image.asset("assets/images/baby_book.png");
+            } else if (index == 1) {
+              return Card(
+                elevation: 0, // Set the elevation here
+                child: Padding( // Add padding
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Image.asset("assets/images/baby_book.png"),
+                    ),
+                    SizedBox(width: 8.0), // Add space
+                    Column(children: [
+                      Text(item.regitUser.nickname, style: largeText),
+                      Text(item.regitUser.location),
+                    ]),
+                    const Spacer(),
+                    Column(children: [
+                      Row(
+                        children: List.generate(item.regitUser.qi,
+                            (index) => Icon(Icons.star, color: Colors.orange)),
+                      ),
+                      Text(item.regiTime),
+                    ]),
+                  ]),
+                ),
+              );
+            } else {
+              return Card(
+                  elevation: 0, // Set the elevation here
+                  child: Padding( // Add padding
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(item.describtion),
+                  ));
+            }
+          },
+          separatorBuilder: (context, index) {
+            return const Divider(
+              color: Color.fromARGB(255, 211, 211, 211), // 색상을 변경하세요.
+              thickness: 1, // 선의 두께를 조절하세요.
+              indent: 20, // 선이 시작하는 위치를 조절하세요.
+              endIndent: 20,
+            );
+          },
         ),
-        Card(child: Text(item.describtion)),
-      ]),
+      ),
       bottomNavigationBar: BottomAppBar(
-          child: Row(
-        children: [
-          Text('가격 : ${item.price.toString()}'),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: () {},
-            child: const Text("채팅하기"),
-          )
-        ],
-      )),
+          elevation: 0, // Set the elevation here
+          child: Padding( // Add padding
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Text('가격 : ${NumberFormat('#,###', 'ko_KR').format(item.price)}원'), // Use the formatter here
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () {},
+                  child: const Text("채팅하기"),
+                )
+              ],
+            ),
+          )),
     );
   }
 }
