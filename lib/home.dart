@@ -199,7 +199,7 @@ class HomeTabSub extends StatelessWidget {
               return Card(
                   elevation: 0, // Set the elevation here
                   child: Padding( // Add padding
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(15.0),
                     child: Text(item.describtion),
                   ));
             }
@@ -217,7 +217,7 @@ class HomeTabSub extends StatelessWidget {
       bottomNavigationBar: BottomAppBar(
           elevation: 0, // Set the elevation here
           child: Padding( // Add padding
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(20.0),
             child: Row(
               children: [
                 Text('가격 : ${NumberFormat('#,###', 'ko_KR').format(item.price)}원'), // Use the formatter here
