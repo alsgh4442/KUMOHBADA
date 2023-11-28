@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kumohbada/main.dart';
 import 'category.dart'; // 카테고리 스크린을 import
+import 'myauth.dart'; // MyAuth 클래스를 import
 
 class WritingPage extends StatefulWidget {
   final Item? editItem; // 편집 중인 아이템을 저장하는 속성 추가
@@ -17,8 +18,9 @@ class _WritingPageState extends State<WritingPage> {
   final TextEditingController priceController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
 
-  File? _image;
+  XFile? _image;
   String _selectedCategory = '디지털기기'; // 선택된 카테고리를 저장할 변수
+  final MyAuth _myAuth = MyAuth(); // MyAuth 클래스 인스턴스 생성
 
   @override
   void initState() {
@@ -27,53 +29,33 @@ class _WritingPageState extends State<WritingPage> {
     // 편집 중이면 기존 데이터로 필드를 채웁니다.
     if (widget.editItem != null) {
       Item editItem = widget.editItem!;
-      titleController.text = editItem.title;
+      titleController.text = editItem.title!;
       priceController.text = editItem.price.toString();
-      descriptionController.text = editItem.describtion;
-      _selectedCategory = editItem.category;
+      descriptionController.text = editItem.description!;
+      _selectedCategory = editItem.category!;
     }
   }
 
   // 이미지를 갤러리에서 선택하는 함수
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile =
-        await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
+    _image = await _myAuth.item.pickImage();
+    setState(() {});
   }
 
   // 글을 제출 또는 수정하는 함수
-  void _submit() {
+  void _submit() async {
     String title = titleController.text;
     String price = priceController.text;
     String description = descriptionController.text;
 
     // 이미지, 제목, 가격, 설명, 선택된 카테고리로 새로운 Item 생성
-    Item newItem = Item(
-      title,
-      _selectedCategory,
-      int.parse(price),
-      description,
-      DateTime.now().toString(), // 현재 시간으로 설정 (나중에 서버 시간을 사용하는 것이 좋음)
-      users[0], // 예시로 users[0]을 사용했는데, 실제 사용자 정보로 변경해야 함
+    await _myAuth.item.registItem(
+      image: _image!,
+      title: title,
+      category: _selectedCategory,
+      price: int.parse(price),
+      description: description,
     );
-
-    // 편집 중인 아이템이 있으면 수정 모드로 처리
-    if (widget.editItem != null) {
-      // 편집 중인 아이템의 인덱스 찾기
-      int editIndex = items.indexOf(widget.editItem!);
-
-      // 해당 인덱스의 아이템을 새로운 아이템으로 교체
-      items[editIndex] = newItem;
-    } else {
-      // 새로운 아이템을 리스트에 추가
-      items.add(newItem);
-    }
 
     Navigator.pop(context, true);
   }
@@ -136,7 +118,7 @@ class _WritingPageState extends State<WritingPage> {
                     width: 130.0,
                     child: Center(
                       child: Image.file(
-                        _image!,
+                        File(_image!.path),
                         fit: BoxFit.scaleDown,
                       ),
                     ),

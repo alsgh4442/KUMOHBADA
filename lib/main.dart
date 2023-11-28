@@ -12,7 +12,13 @@ import 'home.dart';
 import 'category.dart';
 import 'registitem.dart';
 
-void main() => runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
+}
 
 //////페이지 이동을 위한 상수 및 함수//////////////////////////////////////////////
 const String FLOATSUB = "floatsub";
@@ -81,24 +87,24 @@ List<User> users = [
   User("당근", "carrot", "qwer9101", "양호동", 1),
 ];
 
-class Item {
-  //이미지
-  String title;
-  String category;
-  int price;
-  String describtion;
-  String regiTime;
-  User regitUser;
-//채팅 로그파일
-  Item(this.title, this.category, this.price, this.describtion, this.regiTime,
-      this.regitUser);
-}
+// class Item {
+//   //이미지
+//   String title;
+//   String category;
+//   int price;
+//   String describtion;
+//   String regiTime;
+//   User regitUser;
+// //채팅 로그파일
+//   Item(this.title, this.category, this.price, this.describtion, this.regiTime,
+//       this.regitUser);
+// }
 
-List<Item> items = [
-  Item("감자팝니다", "디지털기기", 10000, "상태 좋음", "regiTime", users[0]),
-  Item("양파팝니다", "가공식품", 20000, "상태 보통", "regiTime", users[1]),
-  Item("적양파팝니다", "가공식품", 30000, "상태 보통", "regiTime", users[1]),
-];
+// List<Item> items = [
+//   Item("감자팝니다", "디지털기기", 10000, "상태 좋음", "regiTime", users[0]),
+//   Item("양파팝니다", "가공식품", 20000, "상태 보통", "regiTime", users[1]),
+//   Item("적양파팝니다", "가공식품", 30000, "상태 보통", "regiTime", users[1]),
+// ];
 
 //서식//////////////////////////////////////////////////////////////////////////
 var blackText = const TextStyle(color: Colors.black);

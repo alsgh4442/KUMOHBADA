@@ -24,8 +24,11 @@ const String ITEMID = "itemid";
 class MyAuth {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final MyUser _myUser = MyUser.instance;
+  late MyUser _myUser = MyUser.instance;
   final String _uri = "/UserData";
+
+  get item => null;
+
 
   Future _getDocs(String key, String value) async {
     //key: doc's index, value: document
@@ -116,6 +119,24 @@ class MyAuth {
     }
     await _verifyUser(email, password);
   }
+
+  // findMyItems({required String uid}) {}
+  Future findMyItems({required String uid}) async {
+    try {
+      // 파이어스토어에서 현재 사용자의 아이템을 가져오기
+      var result = await _firestore
+          .collection('/ItemData')
+          .where('uid', isEqualTo: uid)
+          .get();
+
+      if (result.docs.isNotEmpty) {
+        var items = result.docs.map((doc) => Item.fromFirestore(doc)).toList();
+        item.setItems(items);
+      }
+    } catch (e) {
+      print("Error fetching items: $e");
+    }
+  }
 }
 
 class MyUser {
@@ -149,6 +170,43 @@ class Item {
   final String _itemUri = '/ItemData';
   final String _storageUri = 'images/';
 
+  // 아래에 추가된 getter들
+  String? _imageUri;
+  String? _title;
+  int? _price;
+  String? _description;
+  String? _category;
+  Timestamp? _timestamp;
+  String? _register;
+  String? _location;
+  String? _itemID;
+  String? _uid;
+  String? get imageUri => _imageUri;
+  String? get title => _title;
+  int? get price => _price;
+  String? get description => _description;
+  String? get category => _category;
+  Timestamp? get timestamp => _timestamp;
+  String? get register => _register;
+  String? get location => _location;
+
+  Item.fromFirestore(DocumentSnapshot doc) {
+    var data = doc.data() as Map<String, dynamic>;
+    _imageUri = data['IMAGE_URI'];
+    _title = data['TITLE'];
+    _category = data['CATEGORY'];
+    _price = data['PRICE'];
+    _description = data['DESCRIPTION'];
+    _location = data['LOCATION'];
+    _timestamp = data['TIMESTAMP'];
+    _itemID = data['ITEMID'];
+    _register = data['REGISTER'];
+    _uid = data['UID'];
+    //추가요망
+  }
+
+  get regitUser => null;
+
   _getCollection() {
     var result = _firestore.collection(_itemUri);
     return result;
@@ -170,6 +228,7 @@ class Item {
     String imageurl = await ref.getDownloadURL();
     return imageurl;
   }
+
 
   registItem(
       {required XFile image,
@@ -203,7 +262,8 @@ class Item {
     return image;
   }
 
-  findMyItems({required String uid}) {}
+
+  
 
   itemStream() {}
 }
