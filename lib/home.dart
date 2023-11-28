@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'myauth.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class HomeTabContent extends StatefulWidget {
   final String selectedCategory;
@@ -33,75 +34,91 @@ class _HomeTabContentState extends State<HomeTabContent> {
           }
 
           if (snapshot.connectionState == ConnectionState.done) {
-            return ListView.builder(
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (BuildContext context, int index) {
-                Item item = Item.fromFirestore(snapshot.data!.docs[index]);
+            return Container(
+              color: Colors.white,
+              child: ListView.separated(
+                itemCount: snapshot.data!.docs.length,
+                itemBuilder: (BuildContext context, int index) {
+                  Item item = Item.fromFirestore(snapshot.data!.docs[index]);
+                  DateTime date = (item.timestamp as Timestamp).toDate();
+                  String formattedTime = timeago.format(date, locale: 'ko');
 
-                return Card(
-                  elevation: 0,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HomeTabSub(item: item),
-                        ),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Row(
-                        children: <Widget>[
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                                10.0), // 원하는 둥근 모서리 반지름 설정
-                            child: Image.network(
-                              item.imageUri ?? '대체이미지_URL',
-                              width: 100.0,
-                              height: 100.0,
-                              fit: BoxFit.cover,
-                            ),
+                  return Card(
+                    elevation: 0,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HomeTabSub(item: item),
                           ),
-                          const SizedBox(width: 30),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item.title!,
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Row(
+                          children: <Widget>[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10.0),
+                              child: Image.network(
+                                item.imageUri ?? '대체이미지_URL',
+                                width: 100.0,
+                                height: 100.0,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(width: 30),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.title!,
                                     style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 5),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Text(item.location!),
-                                    const SizedBox(width: 5),
-                                    const Text('•'),
-                                    const SizedBox(width: 5),
-                                    Text(item.timestamp?.toDate().toString() ??
-                                        '대체텍스트'),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  NumberFormat('#,###', 'ko_KR')
-                                          .format(item.price!) +
-                                      '원',
-                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(item.location!),
+                                      const SizedBox(width: 5),
+                                      const Text('•'),
+                                      const SizedBox(width: 5),
+                                      Text(formattedTime),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    NumberFormat('#,###', 'ko_KR')
+                                            .format(item.price!) +
+                                        '원',
+                                    style: TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) {
+                  // 각 아이템 사이에 Divider 추가
+                  return Divider(
+                    height: 1,
+                    color: Color.fromARGB(136, 73, 73, 73)!.withOpacity(1),
+                    indent: 16, // 시작 부분의 공백
+                    endIndent: 16, // 끝 부분의 공백
+                  );
+                },
+              ),
             );
           }
 
