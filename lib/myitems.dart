@@ -59,7 +59,6 @@ class _MyItemsTabContentState extends State<MyItemsTabContent> {
                 Text(item.location!),
                 const Spacer(),
                 Text(item.timestamp?.toDate().toString() ?? '대체텍스트'),
-
               ],
             ),
           );

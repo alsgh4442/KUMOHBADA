@@ -11,6 +11,8 @@ import 'chat.dart';
 import 'home.dart';
 import 'category.dart';
 import 'registitem.dart';
+import 'myauth.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,31 +83,6 @@ class User {
   User(this.nickname, this.id, this.pw, this.location, this.qi);
 }
 
-List<User> users = [
-  User("감자", "potato", "qwer1234", "양호동", 5),
-  User("양파", "onion", "qwer5678", "광평동", 3),
-  User("당근", "carrot", "qwer9101", "양호동", 1),
-];
-
-// class Item {
-//   //이미지
-//   String title;
-//   String category;
-//   int price;
-//   String describtion;
-//   String regiTime;
-//   User regitUser;
-// //채팅 로그파일
-//   Item(this.title, this.category, this.price, this.describtion, this.regiTime,
-//       this.regitUser);
-// }
-
-// List<Item> items = [
-//   Item("감자팝니다", "디지털기기", 10000, "상태 좋음", "regiTime", users[0]),
-//   Item("양파팝니다", "가공식품", 20000, "상태 보통", "regiTime", users[1]),
-//   Item("적양파팝니다", "가공식품", 30000, "상태 보통", "regiTime", users[1]),
-// ];
-
 //서식//////////////////////////////////////////////////////////////////////////
 var blackText = const TextStyle(color: Colors.black);
 var largeText = const TextStyle(fontSize: 17);
@@ -118,7 +95,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: MainPage(),
+      home: LoginPage(),
     );
   }
 }
@@ -162,7 +139,7 @@ class _MainPageState extends State<MainPage> {
     final List<Widget> tabs = [
       HomeTabContent(selectedCategory: _selectedCategory),
       const ChatTabContent(),
-      const ProfileTabContent(),
+      ProfileTabContent(),
     ];
 
     return Scaffold(

@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 // ignore: constant_identifier_names
 const String UID = "uid";
@@ -29,6 +31,14 @@ class MyAuth {
 
   get item => null;
 
+  Future pickImage() async {
+    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (image == null) {
+      print("!null from image");
+      return;
+    }
+    return image;
+  }
 
   Future _getDocs(String key, String value) async {
     //key: doc's index, value: document
@@ -161,6 +171,8 @@ class MyUser {
     _nickname = nickname;
     _location = location;
   }
+
+  
 }
 
 class Item {
@@ -253,17 +265,33 @@ class Item {
     collection.add(item);
   }
 
-  Future pickImage() async {
-    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (image == null) {
-      print("!null from image");
-      return;
-    }
-    return image;
-  }
 
 
   
 
   itemStream() {}
+}
+
+
+
+class ProfileTabContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          const Text(
+            '현재 로그인된 사용자의 uid:',
+          ),
+          Text(
+            user != null ? user.uid : '로그인된 사용자가 없습니다.',
+            style: Theme.of(context).textTheme.headline4,
+          ),
+        ],
+      ),
+    );
+  }
 }

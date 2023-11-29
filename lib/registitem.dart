@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:kumohbada/main.dart';
+import 'main.dart';
 import 'category.dart'; // 카테고리 스크린을 import
 import 'myauth.dart'; // MyAuth 클래스를 import
 
@@ -21,7 +21,6 @@ class _WritingPageState extends State<WritingPage> {
   XFile? _image;
   String _selectedCategory = '디지털기기'; // 선택된 카테고리를 저장할 변수
   final MyAuth _myAuth = MyAuth(); // MyAuth 클래스 인스턴스 생성
-
   @override
   void initState() {
     super.initState();
@@ -38,7 +37,7 @@ class _WritingPageState extends State<WritingPage> {
 
   // 이미지를 갤러리에서 선택하는 함수
   Future<void> _pickImage() async {
-    _image = await _myAuth.item.pickImage();
+    _image = await _myAuth.pickImage();
     setState(() {});
   }
 

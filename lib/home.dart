@@ -17,7 +17,6 @@ class HomeTabContent extends StatefulWidget {
 class _HomeTabContentState extends State<HomeTabContent> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
-  final MyAuth _myAuth = MyAuth();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
@@ -43,71 +42,78 @@ class _HomeTabContentState extends State<HomeTabContent> {
                   DateTime date = (item.timestamp as Timestamp).toDate();
                   String formattedTime = timeago.format(date, locale: 'ko');
 
-                  return Card(
-                    elevation: 0,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => HomeTabSub(item: item),
+                  // 선택된 카테고리에 따라 아이템 필터링
+                  if (widget.selectedCategory == '전체' ||
+                      item.category == widget.selectedCategory) {
+                    return Card(
+                      elevation: 0,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HomeTabSub(item: item),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Row(
+                            children: <Widget>[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10.0),
+                                child: Image.network(
+                                  item.imageUri ?? '대체이미지_URL',
+                                  width: 100.0,
+                                  height: 100.0,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 30),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.title!,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Text(item.location!),
+                                        const SizedBox(width: 5),
+                                        const Text('•'),
+                                        const SizedBox(width: 5),
+                                        Text(formattedTime),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      '${NumberFormat('#,###', 'ko_KR')
+                                              .format(item.price!)}원',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Row(
-                          children: <Widget>[
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10.0),
-                              child: Image.network(
-                                item.imageUri ?? '대체이미지_URL',
-                                width: 100.0,
-                                height: 100.0,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            const SizedBox(width: 30),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.title!,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(item.location!),
-                                      const SizedBox(width: 5),
-                                      const Text('•'),
-                                      const SizedBox(width: 5),
-                                      Text(formattedTime),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    NumberFormat('#,###', 'ko_KR')
-                                            .format(item.price!) +
-                                        '원',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                  );
+                    );
+                  } else {
+                    // 선택된 카테고리와 일치하지 않는 경우는 빈 컨테이너 반환
+                    return Container();
+                  }
                 },
                 separatorBuilder: (BuildContext context, int index) {
                   // 각 아이템 사이에 Divider 추가
