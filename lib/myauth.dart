@@ -1,0 +1,297 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+// ignore: constant_identifier_names
+const String UID = "uid";
+const String NICKNAME = "nickname";
+const String LOCATION = "location";
+
+const String IMAGE_URI = 'imageUri';
+const String TITLE = "title";
+const String CATEGORY = "category";
+const String PRICE = "price";
+const String DESCRIPTION = "description";
+const String TIMESTAMP = "timestamp";
+const String REGISTER = "register";
+const String EMAIL = "email";
+const String ITEMID = "itemid";
+
+class MyAuth {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late MyUser _myUser = MyUser.instance;
+  final String _uri = "/UserData";
+
+  get item => null;
+
+  Future pickImage() async {
+    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (image == null) {
+      print("!null from image");
+      return;
+    }
+    return image;
+  }
+
+  Future _getDocs(String key, String value) async {
+    //key: doc's index, value: document
+    var result =
+        await _firestore.collection(_uri).where(key, isEqualTo: value).get();
+    var docs = result.docs.asMap();
+    return docs;
+  }
+
+  Future _authenticateUser(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
+      User? user = result.user;
+      return user;
+    } on FirebaseAuthException {
+      return;
+    }
+  }
+
+  _loadUserData(String uid) async {
+    var docs = await _getDocs(UID, uid);
+    if (docs == null || docs.isEmpty || docs[0] == null) {
+      print("!docs null or empty");
+      return;
+    }
+    Map data = docs[0].data() as Map;
+    if (data[UID] == null || data[NICKNAME] == null || data[LOCATION] == null) {
+      print("!null from user database");
+      return;
+    }
+    if (data.isEmpty) {
+      print("!user not exist");
+      return;
+    }
+    return data;
+  }
+
+  _isNicknameTaken(String nickname) async {
+    var data = await _getDocs(NICKNAME, nickname);
+    if (data == null || data.isEmpty) {
+      return false;
+    }
+    return true;
+  }
+
+  Future _verifyUser(String email, String password) async {
+    try {
+      UserCredential userInfo = await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      if (userInfo.user!.email == null) {
+        print("!null from email");
+        return;
+      }
+      _auth.currentUser!.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      print(e.code.toString());
+    }
+  }
+
+  //sign in
+  signIn({required String email, required String password}) async {
+    User? user = await _authenticateUser(email, password);
+    if (user == null) {
+      print("!failed verifying user");
+      return;
+    }
+    Map<String, dynamic>? data = await _loadUserData(user.uid);
+    if (data == null) {
+      print("!failed load data");
+      return;
+    }
+    _myUser.setUser(
+        uid: data[UID], nickname: data[NICKNAME], location: data[LOCATION]);
+    return true;
+  }
+
+  //sign out
+  Future signOut() async => await FirebaseAuth.instance.signOut();
+
+  //sign up
+  signUp(
+      {required String email,
+      required String password,
+      required String nickname}) async {
+    if (await _isNicknameTaken(nickname)) {
+      return;
+    }
+    await _verifyUser(email, password);
+  }
+
+  // findMyItems({required String uid}) {}
+  Future findMyItems({required String uid}) async {
+    try {
+      // 파이어스토어에서 현재 사용자의 아이템을 가져오기
+      var result = await _firestore
+          .collection('/ItemData')
+          .where('uid', isEqualTo: uid)
+          .get();
+
+      if (result.docs.isNotEmpty) {
+        var items = result.docs.map((doc) => Item.fromFirestore(doc)).toList();
+        item.setItems(items);
+      }
+    } catch (e) {
+      print("Error fetching items: $e");
+    }
+  }
+}
+
+class MyUser {
+  //singleton
+  MyUser._privateConstructor();
+  static final MyUser _instance = MyUser._privateConstructor();
+  static MyUser get instance => _instance;
+  //member variable
+  String? _uid;
+  String? _nickname;
+  String? _location;
+
+  String? get getUid => _uid;
+  String? get getNickname => _nickname;
+  String? get getLocation => _location;
+
+  setUser(
+      {required String uid,
+      required String nickname,
+      required String location}) {
+    _uid = uid;
+    _nickname = nickname;
+    _location = location;
+  }
+
+  
+}
+
+class Item {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final MyUser _myUser = MyUser._instance;
+  final String _itemUri = '/ItemData';
+  final String _storageUri = 'images/';
+
+  // 아래에 추가된 getter들
+  String? _imageUri;
+  String? _title;
+  int? _price;
+  String? _description;
+  String? _category;
+  Timestamp? _timestamp;
+  String? _register;
+  String? _location;
+  String? _itemID;
+  String? _uid;
+  String? get imageUri => _imageUri;
+  String? get title => _title;
+  int? get price => _price;
+  String? get description => _description;
+  String? get category => _category;
+  Timestamp? get timestamp => _timestamp;
+  String? get register => _register;
+  String? get location => _location;
+
+  Item.fromFirestore(DocumentSnapshot doc) {
+    var data = doc.data() as Map<String, dynamic>;
+    _imageUri = data['IMAGE_URI'];
+    _title = data['TITLE'];
+    _category = data['CATEGORY'];
+    _price = data['PRICE'];
+    _description = data['DESCRIPTION'];
+    _location = data['LOCATION'];
+    _timestamp = data['TIMESTAMP'];
+    _itemID = data['ITEMID'];
+    _register = data['REGISTER'];
+    _uid = data['UID'];
+    //추가요망
+  }
+
+  get regitUser => null;
+
+  _getCollection() {
+    var result = _firestore.collection(_itemUri);
+    return result;
+  }
+
+  String _getUuid() {
+    Uuid uuid = const Uuid();
+    return uuid.v4();
+  }
+
+  Future _registImage(XFile image) async {
+    String str = _getUuid(); //무작위로 이름 생성
+    //참조 생성
+    Reference ref = _storage.ref().child('$_storageUri$str');
+    //picker로 얻어온 이미지를 uint8list타입으로 반환
+    //File(image.path)를 사용할 경우, 모바일 상에서는 동작 가능하지만, 웹 상에서 동작 안함.
+    Uint8List imageData = await image.readAsBytes();
+    await ref.putData(imageData);
+    String imageurl = await ref.getDownloadURL();
+    return imageurl;
+  }
+
+
+  registItem(
+      {required XFile image,
+      required String title,
+      required String category,
+      required int price,
+      required String description}) async {
+    var collection = _getCollection(); //아이템 정보 등록할 firestore
+    String url = await _registImage(image);
+    Map<String, dynamic> item = {
+      UID: _myUser.getUid,
+      ITEMID: _getUuid(),
+      IMAGE_URI: url,
+      TITLE: title,
+      CATEGORY: category,
+      PRICE: price.toString(),
+      DESCRIPTION: description,
+      TIMESTAMP: FieldValue.serverTimestamp(),
+      REGISTER: _myUser.getNickname,
+      LOCATION: _myUser.getLocation,
+    };
+    collection.add(item);
+  }
+
+
+
+  
+
+  itemStream() {}
+}
+
+
+
+class ProfileTabContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          const Text(
+            '현재 로그인된 사용자의 uid:',
+          ),
+          Text(
+            user != null ? user.uid : '로그인된 사용자가 없습니다.',
+            style: Theme.of(context).textTheme.headline4,
+          ),
+        ],
+      ),
+    );
+  }
+}
