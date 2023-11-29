@@ -67,7 +67,7 @@ class _MyItemsTabContentState extends State<MyItemsTabContent> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(Icons.edit),
+                  icon: const Icon(Icons.edit),
                   onPressed: () {
                     // 수정 기능 호출
                     Navigator.push(
@@ -86,28 +86,28 @@ class _MyItemsTabContentState extends State<MyItemsTabContent> {
                   },
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete),
+                  icon: const Icon(Icons.delete),
                   onPressed: () {
                     // 삭제 기능 호출
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: Text('삭제 확인'),
-                          content: Text('이 항목을 삭제하시겠습니까?'),
+                          title: const Text('삭제 확인'),
+                          content: const Text('이 항목을 삭제하시겠습니까?'),
                           actions: [
                             TextButton(
                               onPressed: () {
                                 _deleteItem(item);
                                 Navigator.of(context).pop();
                               },
-                              child: Text('삭제'),
+                              child: const Text('삭제'),
                             ),
                             TextButton(
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
-                              child: Text('취소'),
+                              child: const Text('취소'),
                             ),
                           ],
                         );

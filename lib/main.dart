@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:kumohbada/myitems.dart';
 import 'package:kumohbada/profile.dart';
 import 'chat.dart';
@@ -260,16 +261,21 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-class SearchSub extends StatelessWidget {
+class SearchSub extends StatefulWidget {
   final String? selectedLocation;
-  const SearchSub({super.key, required this.selectedLocation});
+
+  const SearchSub({Key? key, required this.selectedLocation}) : super(key: key);
+
+  @override
+  _SearchSubState createState() => _SearchSubState();
+}
+
+class _SearchSubState extends State<SearchSub> {
+  final TextEditingController _controller = TextEditingController();
+  List<Item> filteredItems = [];
 
   @override
   Widget build(BuildContext context) {
-    // ignore: no_leading_underscores_for_local_identifiers
-    TextEditingController _controller =
-        TextEditingController(text: '$selectedLocation 근처에서 검색');
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -277,17 +283,89 @@ class SearchSub extends StatelessWidget {
         elevation: 0.0,
         title: TextField(
           controller: _controller,
-          onChanged: (value) {
-            // 검색 로직을 여기에 구현합니다.
-          },
-          decoration: const InputDecoration(
-            prefixIcon: Icon(Icons.search),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(25.0)),
+          onChanged: _onSearchTextChanged,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            hintText: widget.selectedLocation != null
+                ? '${widget.selectedLocation} 근처에서 검색'
+                : '검색어를 입력하세요',
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(23.0)),
             ),
           ),
         ),
       ),
+      body: _buildSearchResults(),
+    );
+  }
+
+  void _onSearchTextChanged(String value) {
+    setState(() {
+      filteredItems = items
+          .where(
+              (item) => item.title.toLowerCase().contains(value.toLowerCase()))
+          .toList();
+    });
+  }
+
+  Widget _buildSearchResults() {
+    return ListView.builder(
+      itemCount: filteredItems.length,
+      itemBuilder: (context, index) {
+        final Item item = filteredItems[index];
+        return Card(
+          elevation: 0,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HomeTabSub(item: item),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Row(
+                children: <Widget>[
+                  Image.asset(
+                    "assets/images/baby_book.png",
+                    width: 100,
+                    height: 100,
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.title, style: largeText),
+                        const SizedBox(height: 5),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.regitUser.location,
+                            ),
+                            const SizedBox(width: 5),
+                            const Text('•'),
+                            const SizedBox(width: 5),
+                            Text(item.regiTime),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '${NumberFormat('#,###', 'ko_KR').format(item.price)}원',
+                          style: boldText,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
