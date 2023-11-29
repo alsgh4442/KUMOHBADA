@@ -178,10 +178,13 @@ class HomeTabSub extends StatelessWidget {
                     const Spacer(),
                     Column(children: [
                       Row(
-                        children: List.generate(item.regitUser.qi,
+                        children: List.generate(
+                            5, // 별점을 표시하는 부분은 어떻게 처리할지 알려주셔야 합니다.
                             (index) => Icon(Icons.star, color: Colors.orange)),
                       ),
-                      Text(item.timestamp?.toDate().toString() ?? '대체텍스트'),
+                      Text(timeago.format(
+                          (item.timestamp as Timestamp).toDate(),
+                          locale: 'ko')),
                     ]),
                   ]),
                 ),
