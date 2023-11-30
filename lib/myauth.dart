@@ -31,15 +31,6 @@ class MyAuth {
 
   get item => null;
 
-  Future pickImage() async {
-    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (image == null) {
-      print("!null from image");
-      return;
-    }
-    return image;
-  }
-
   Future _getDocs(String key, String value) async {
     //key: doc's index, value: document
     var result =
@@ -138,15 +129,20 @@ class MyAuth {
           .collection('/ItemData')
           .where('uid', isEqualTo: uid)
           .get();
-
       if (result.docs.isNotEmpty) {
-        var items = result.docs.map((doc) => Item.fromFirestore(doc)).toList();
+        var items = result.docs.map((doc) {
+          Item item = Item();
+          item.fromFirestore(doc);
+          return item;
+        }).toList();
         item.setItems(items);
       }
     } catch (e) {
       print("Error fetching items: $e");
     }
   }
+
+  pickImage() {}
 }
 
 class MyUser {
@@ -171,53 +167,60 @@ class MyUser {
     _nickname = nickname;
     _location = location;
   }
-
-  
 }
 
 class Item {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
-  final MyUser _myUser = MyUser._instance;
+  late MyUser _myUser = MyUser._instance;
   final String _itemUri = '/ItemData';
   final String _storageUri = 'images/';
-
-  // 아래에 추가된 getter들
+  static final MyUser _instance = MyUser._privateConstructor();
+  static MyUser get instance => _instance;
+  // Add these fields
   String? _imageUri;
   String? _title;
+  String? _category;
   int? _price;
   String? _description;
-  String? _category;
+  String? _location;
   Timestamp? _timestamp;
   String? _register;
-  String? _location;
-  String? _itemID;
   String? _uid;
+
+  // Add these getters
   String? get imageUri => _imageUri;
   String? get title => _title;
+  String? get category => _category;
   int? get price => _price;
   String? get description => _description;
-  String? get category => _category;
+  String? get location => _location;
   Timestamp? get timestamp => _timestamp;
   String? get register => _register;
-  String? get location => _location;
+  String? get uid => _uid;
 
-  Item.fromFirestore(DocumentSnapshot doc) {
+  void fromFirestore(QueryDocumentSnapshot doc) {
     var data = doc.data() as Map<String, dynamic>;
-    _imageUri = data['IMAGE_URI'];
-    _title = data['TITLE'];
-    _category = data['CATEGORY'];
-    _price = data['PRICE'];
-    _description = data['DESCRIPTION'];
-    _location = data['LOCATION'];
-    _timestamp = data['TIMESTAMP'];
-    _itemID = data['ITEMID'];
-    _register = data['REGISTER'];
-    _uid = data['UID'];
-    //추가요망
+    _imageUri = data[IMAGE_URI];
+    _title = data[TITLE];
+    _category = data[CATEGORY];
+    _price = data[PRICE];
+    _description = data[DESCRIPTION];
+    _location = data[LOCATION];
+    _timestamp = data[TIMESTAMP];
+    _register = data[REGISTER];
+    _uid = data[UID];
   }
 
-  get regitUser => null;
+
+  Future pickImage() async {
+    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (image == null) {
+      print("!null from image");
+      return;
+    }
+    return image;
+  }
 
   _getCollection() {
     var result = _firestore.collection(_itemUri);
@@ -240,7 +243,6 @@ class Item {
     String imageurl = await ref.getDownloadURL();
     return imageurl;
   }
-
 
   registItem(
       {required XFile image,
@@ -265,14 +267,15 @@ class Item {
     collection.add(item);
   }
 
-
-
-  
+  getMyItem() {
+    var collection = _getCollection();
+    MyUser _myUser = MyUser.instance;
+    var result = collection.where(UID, isEqualTo: _myUser.getUid).get();
+    return result;
+  }
 
   itemStream() {}
 }
-
-
 
 class ProfileTabContent extends StatelessWidget {
   @override

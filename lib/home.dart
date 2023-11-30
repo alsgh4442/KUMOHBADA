@@ -18,6 +18,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final Item _item = Item();
 
   @override
   Widget build(BuildContext context) {
@@ -32,19 +33,29 @@ class _HomeTabContentState extends State<HomeTabContent> {
             return Text('Something went wrong');
           }
 
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          }
+
+          if (snapshot.data == null || snapshot.data!.docs.isEmpty) {
+            return Text('No data');
+          }
+
+          _item.fromFirestore(snapshot.data!.docs.first);
           if (snapshot.connectionState == ConnectionState.done) {
             return Container(
               color: Colors.white,
               child: ListView.separated(
                 itemCount: snapshot.data!.docs.length,
                 itemBuilder: (BuildContext context, int index) {
-                  Item item = Item.fromFirestore(snapshot.data!.docs[index]);
-                  DateTime date = (item.timestamp as Timestamp).toDate();
+                  DateTime date =
+                      (snapshot.data!.docs[index]['timestamp'] as Timestamp)
+                          .toDate();
                   String formattedTime = timeago.format(date, locale: 'ko');
 
                   // 선택된 카테고리에 따라 아이템 필터링
                   if (widget.selectedCategory == '전체' ||
-                      item.category == widget.selectedCategory) {
+                      _item.category == widget.selectedCategory) {
                     return Card(
                       elevation: 0,
                       child: InkWell(
@@ -52,7 +63,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => HomeTabSub(item: item),
+                              builder: (context) => HomeTabSub(item: _item),
                             ),
                           );
                         },
@@ -63,7 +74,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(10.0),
                                 child: Image.network(
-                                  item.imageUri ?? '대체이미지_URL',
+                                  _item.imageUri ?? '대체이미지_URL',
                                   width: 100.0,
                                   height: 100.0,
                                   fit: BoxFit.cover,
@@ -75,7 +86,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      item.title!,
+                                      _item.title!,
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -86,7 +97,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.start,
                                       children: [
-                                        Text(item.location!),
+                                        Text(_item.location!),
                                         const SizedBox(width: 5),
                                         const Text('•'),
                                         const SizedBox(width: 5),
@@ -95,8 +106,7 @@ class _HomeTabContentState extends State<HomeTabContent> {
                                     ),
                                     const SizedBox(height: 5),
                                     Text(
-                                      '${NumberFormat('#,###', 'ko_KR')
-                                              .format(item.price!)}원',
+                                      '${NumberFormat('#,###', 'ko_KR').format(_item.price!)}원',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,

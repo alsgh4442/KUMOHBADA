@@ -69,19 +69,8 @@ final List<String> _availableLocations = [
   '공단동',
 ];
 
-class User {
-  String nickname;
-  String id;
-  String pw;
-  String location;
-  int qi;
-// 등록 매물 수
-// 판매 중인 매물 수
-// 판매 완료 매물 수
-// 현재 채팅방 수?
 
-  User(this.nickname, this.id, this.pw, this.location, this.qi);
-}
+
 
 //서식//////////////////////////////////////////////////////////////////////////
 var blackText = const TextStyle(color: Colors.black);
