@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:kumohbada/category.dart';
 import 'package:kumohbada/registitem.dart';
 import 'firebase_options.dart';
@@ -12,7 +14,7 @@ import 'home.dart';
 import 'category.dart';
 import 'registitem.dart';
 import 'myauth.dart';
-
+import 'package:timeago/timeago.dart' as timeago;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -139,12 +141,12 @@ class _MainPageState extends State<MainPage> {
     final List<Widget> tabs = [
       HomeTabContent(selectedCategory: _selectedCategory),
       const ChatTabContent(),
-      ProfileTabContent(),
+      const ProfileTabContent(),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        elevation:0.0,
+        elevation: 0.0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         title: PopupMenuButton(
@@ -249,16 +251,22 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-class SearchSub extends StatelessWidget {
+class SearchSub extends StatefulWidget {
   final String? selectedLocation;
+
   const SearchSub({super.key, required this.selectedLocation});
 
   @override
-  Widget build(BuildContext context) {
-    // ignore: no_leading_underscores_for_local_identifiers
-    TextEditingController _controller =
-        TextEditingController(text: '$selectedLocation 근처에서 검색');
+  _SearchSubState createState() => _SearchSubState();
+}
 
+class _SearchSubState extends State<SearchSub> {
+  final TextEditingController _controller = TextEditingController();
+
+  List<Item> filteredItems = [];
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -266,9 +274,7 @@ class SearchSub extends StatelessWidget {
         elevation: 0.0,
         title: TextField(
           controller: _controller,
-          onChanged: (value) {
-            // 검색 로직을 여기에 구현합니다.
-          },
+          onChanged: _onSearchTextChanged,
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.search),
             border: OutlineInputBorder(
@@ -277,7 +283,136 @@ class SearchSub extends StatelessWidget {
           ),
         ),
       ),
+      body: FutureBuilder<QuerySnapshot>(
+        future: FirebaseFirestore.instance.collection('ItemData').get(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return const Text('Something went wrong');
+          }
+
+          if (snapshot.connectionState == ConnectionState.done) {
+            var items = snapshot.data!.docs
+                .map((doc) => Item.fromFirestore(doc))
+                .where((item) =>
+                    (_controller.text.isEmpty) ||
+                    item.title!
+                        .toLowerCase()
+                        .contains(_controller.text.toLowerCase()))
+                .toList();
+
+            return Container(
+              color: Colors.white,
+              child: ListView.separated(
+                itemCount: items.length,
+                itemBuilder: (BuildContext context, int index) {
+                  Item item = items[index];
+                  DateTime date = (item.timestamp as Timestamp).toDate();
+                  String formattedTime = timeago.format(date, locale: 'ko');
+
+                  // 아이템을 UI로 표현하는 코드
+                  return Card(
+                    elevation: 0,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HomeTabSub(item: item),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Row(
+                          children: <Widget>[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10.0),
+                              child: Image.network(
+                                item.imageUri ?? '대체이미지_URL',
+                                width: 100.0,
+                                height: 100.0,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(width: 30),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.title!,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(item.location!),
+                                      const SizedBox(width: 5),
+                                      const Text('•'),
+                                      const SizedBox(width: 5),
+                                      Text(formattedTime),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    '${NumberFormat('#,###', 'ko_KR').format(item.price!)}원',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) {
+                  return Divider(
+                    height: 1,
+                    color: const Color.fromARGB(136, 73, 73, 73).withOpacity(1),
+                    indent: 16,
+                    endIndent: 16,
+                  );
+                },
+              ),
+            );
+          }
+
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
     );
+  }
+
+  void _onSearchTextChanged(String value) {
+    // 필터링된 데이터를 가져와서 UI 업데이트
+    FirebaseFirestore.instance
+        .collection('ItemData')
+        .get()
+        .then((querySnapshot) {
+      var items = querySnapshot.docs
+          .map((doc) => Item.fromFirestore(doc))
+          .where((item) =>
+              (value.isEmpty) ||
+              item.title!.toLowerCase().contains(value.toLowerCase()))
+          .toList();
+
+      // UI 업데이트
+      filteredItems = items;
+      // 상태를 갱신하여 위젯을 리빌드
+      setState(() {});
+    }).catchError((error) {
+      // 에러 처리
+      print('Error fetching data: $error');
+    });
   }
 }
 

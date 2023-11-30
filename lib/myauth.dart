@@ -26,7 +26,7 @@ const String ITEMID = "itemid";
 class MyAuth {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  late MyUser _myUser = MyUser.instance;
+  late final MyUser _myUser = MyUser.instance;
   final String _uri = "/UserData";
 
   get item => null;
@@ -171,8 +171,6 @@ class MyUser {
     _nickname = nickname;
     _location = location;
   }
-
-  
 }
 
 class Item {
@@ -204,16 +202,16 @@ class Item {
 
   Item.fromFirestore(DocumentSnapshot doc) {
     var data = doc.data() as Map<String, dynamic>;
-    _imageUri = data['IMAGE_URI'];
-    _title = data['TITLE'];
-    _category = data['CATEGORY'];
-    _price = data['PRICE'];
-    _description = data['DESCRIPTION'];
-    _location = data['LOCATION'];
-    _timestamp = data['TIMESTAMP'];
-    _itemID = data['ITEMID'];
-    _register = data['REGISTER'];
-    _uid = data['UID'];
+    _imageUri = data[IMAGE_URI];
+    _title = data[TITLE];
+    _category = data[CATEGORY];
+    _price = data[PRICE];
+    _description = data[DESCRIPTION];
+    _location = data[LOCATION];
+    _timestamp = data[TIMESTAMP];
+    _itemID = data[ITEMID];
+    _register = data[REGISTER];
+    _uid = data[UID];
     //추가요망
   }
 
@@ -241,7 +239,6 @@ class Item {
     return imageurl;
   }
 
-
   registItem(
       {required XFile image,
       required String title,
@@ -265,16 +262,12 @@ class Item {
     collection.add(item);
   }
 
-
-
-  
-
   itemStream() {}
 }
 
-
-
 class ProfileTabContent extends StatelessWidget {
+  const ProfileTabContent({super.key});
+
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -288,7 +281,7 @@ class ProfileTabContent extends StatelessWidget {
           ),
           Text(
             user != null ? user.uid : '로그인된 사용자가 없습니다.',
-            style: Theme.of(context).textTheme.headline4,
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
         ],
       ),
