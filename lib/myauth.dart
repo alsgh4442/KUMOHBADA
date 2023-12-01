@@ -31,15 +31,6 @@ class MyAuth {
 
   get item => null;
 
-  Future pickImage() async {
-    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (image == null) {
-      print("!null from image");
-      return;
-    }
-    return image;
-  }
-
   Future _getDocs(String key, String value) async {
     //key: doc's index, value: document
     var result =
@@ -130,7 +121,7 @@ class MyAuth {
     await _verifyUser(email, password);
   }
 
-  // findMyItems({required String uid}) {}
+  //findMyItems({required String uid}) {}
   Future findMyItems({required String uid}) async {
     try {
       // 파이어스토어에서 현재 사용자의 아이템을 가져오기
@@ -171,8 +162,6 @@ class MyUser {
     _nickname = nickname;
     _location = location;
   }
-
-  
 }
 
 class Item {
@@ -217,6 +206,8 @@ class Item {
     //추가요망
   }
 
+  Item.getItemFuction();
+
   get regitUser => null;
 
   _getCollection() {
@@ -241,6 +232,14 @@ class Item {
     return imageurl;
   }
 
+  Future pickImage() async {
+    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (image == null) {
+      print("!null from image");
+      return;
+    }
+    return image;
+  }
 
   registItem(
       {required XFile image,
@@ -265,14 +264,8 @@ class Item {
     collection.add(item);
   }
 
-
-
-  
-
   itemStream() {}
 }
-
-
 
 class ProfileTabContent extends StatelessWidget {
   @override

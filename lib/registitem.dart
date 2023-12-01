@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'main.dart';
-import 'category.dart'; // 카테고리 스크린을 import
-import 'myauth.dart'; // MyAuth 클래스를 import
+import 'category.dart';
+import 'myauth.dart';
 
 class WritingPage extends StatefulWidget {
-  final Item? editItem; // 편집 중인 아이템을 저장하는 속성 추가
+  final Item? editItem; // 편집 아이템을 저장
   const WritingPage({Key? key, this.editItem}) : super(key: key);
 
   @override
@@ -20,7 +20,9 @@ class _WritingPageState extends State<WritingPage> {
 
   XFile? _image;
   String _selectedCategory = '디지털기기'; // 선택된 카테고리를 저장할 변수
-  final MyAuth _myAuth = MyAuth(); // MyAuth 클래스 인스턴스 생성
+  final MyAuth _myAuth = MyAuth();
+  final Item _item = Item.getItemFuction();
+
   @override
   void initState() {
     super.initState();
@@ -35,20 +37,18 @@ class _WritingPageState extends State<WritingPage> {
     }
   }
 
-  // 이미지를 갤러리에서 선택하는 함수
-  Future<void> _pickImage() async {
-    _image = await _myAuth.pickImage();
-    setState(() {});
-  }
-
   // 글을 제출 또는 수정하는 함수
   void _submit() async {
+    if (_image == null) {
+      //이미지 선택 안했을 때
+      return;
+    }
     String title = titleController.text;
     String price = priceController.text;
     String description = descriptionController.text;
 
     // 이미지, 제목, 가격, 설명, 선택된 카테고리로 새로운 Item 생성
-    await _myAuth.item.registItem(
+    await _item.registItem(
       image: _image!,
       title: title,
       category: _selectedCategory,
@@ -103,7 +103,10 @@ class _WritingPageState extends State<WritingPage> {
                   width: 130.0,
                   child: Center(
                     child: ElevatedButton(
-                      onPressed: _pickImage,
+                      onPressed: () async {
+                        _image = await _item.pickImage();
+                        setState(() {});
+                      },
                       child: const Text('이미지 선택'),
                     ),
                   ),
@@ -111,15 +114,15 @@ class _WritingPageState extends State<WritingPage> {
               // 선택한 이미지 표시
               if (_image != null)
                 GestureDetector(
-                  onTap: _pickImage,
+                  onTap: () async {
+                    _image = await _item.pickImage();
+                    setState(() {});
+                  },
                   child: SizedBox(
                     height: 100.0,
                     width: 130.0,
                     child: Center(
-                      child: Image.file(
-                        File(_image!.path),
-                        fit: BoxFit.scaleDown,
-                      ),
+                      child: Image.network(_image!.path),
                     ),
                   ),
                 ),
