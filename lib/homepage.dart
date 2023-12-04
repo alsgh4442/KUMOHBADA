@@ -174,7 +174,7 @@ class _HomeSubPageState extends State<HomeSubPage> {
                     Column(children: [
                       Row(
                         children: List.generate(
-                            5, // 별점을 표시하는 부분은 어떻게 처리할지 알려주셔야 합니다.
+                            5,
                             (index) => Icon(Icons.star, color: Colors.orange)),
                       ),
                       Text(timeago.format(

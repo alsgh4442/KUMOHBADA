@@ -28,7 +28,6 @@ const String SENDER = "sender";
 const String RECEIVER = "receiver";
 const String SENDER_UID = "sender_uid";
 const String RECEIVER_UID = "receiver_uid";
-
 class MyLocation extends ChangeNotifier {
   String _location = "양호동";
   String get getLocation => _location;
@@ -441,4 +440,21 @@ class Chat {
     });
     print("create chat room");
   }
+// 마지막 메시지를 가져오는 함수
+// 마지막 메시지를 가져오는 함수
+Future<String> getLastMessage(CollectionReference chatRoom) async {
+  var result = await chatRoom.orderBy(TIMESTAMP, descending: true).limit(1).get();
+  if (result.docs.isEmpty) {
+    return "No messages yet";
+  } else {
+    var data = result.docs[0].data() as Map<String, dynamic>?;
+    if (data != null && data.containsKey(CONTENT)) {
+      return data[CONTENT];
+    } else {
+      return "No content available";
+    }
+  }
+}
+
+
 }

@@ -29,7 +29,11 @@ class _ChatPageState extends State<ChatPage> {
                         snapshot.data[index], snapshot.data[index][SENDER_UID]);
                   }));
                 },
-                child: Card(child: Text(snapshot.data[index][ITEMID])),
+                child: ListTile(
+                  leading: Icon(Icons.chat), // Add an icon for each chat item
+                  title: Text(snapshot.data[index][RECEIVER]),
+                  subtitle: Text('Last message...'), // Add a placeholder for the last message
+                ),
               );
             },
             separatorBuilder: _buildSeparator,
@@ -91,9 +95,25 @@ class _ChatSubPageState extends State<ChatSubPage> {
       itemBuilder: (context, index) {
         var doc = snapshot.data!.docs[index];
         var data = doc.data() as Map<String, dynamic>;
-        return ListTile(
-          title: Text(data[CONTENT]),
-          subtitle: Text(data[SENDER]),
+        bool isMe = data[SENDER] == _myUser.getUid; // Check if the message is sent by the user
+
+        return Container(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            padding: EdgeInsets.all(10.0),
+            margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+            decoration: BoxDecoration(
+              color: isMe ? Colors.orange : Colors.grey, // Change the color based on the sender
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Text(
+              data[CONTENT],
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.0,
+              ),
+            ),
+          ),
         );
       },
     );
@@ -124,9 +144,10 @@ class _ChatSubPageState extends State<ChatSubPage> {
     Future<void> sendMessage() async {
       await chatRoom.add({
         CONTENT: txtcontrollor.text,
-        SENDER: _myUser.getNickname,
+        SENDER: _myUser.getUid,
         TIMESTAMP: FieldValue.serverTimestamp(),
       });
+      txtcontrollor.clear(); // Clear the text field after sending a message
     }
 
     return Scaffold(
@@ -135,18 +156,38 @@ class _ChatSubPageState extends State<ChatSubPage> {
         stream: chatRoom.orderBy(TIMESTAMP, descending: true).snapshots(),
         builder: buildChatContent,
       ),
-      bottomNavigationBar: Row(children: [
-        Expanded(
-          child: TextField(
-            controller: txtcontrollor,
-            decoration: const InputDecoration(
-              labelText: "input",
-              border: OutlineInputBorder(),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.all(10.0), // Add padding around the text field
+        child: Row(children: [
+          Expanded(
+            child: TextField(
+              controller: txtcontrollor,
+              decoration: const InputDecoration(
+                labelText: "텍스트를 입력하세요",
+                border: OutlineInputBorder(),
+                fillColor: Colors.white,
+                filled: true,
+              ),
+              onSubmitted: (text) {
+                sendMessage(); // Send the message when the enter key is pressed
+              },
             ),
           ),
-        ),
-        ElevatedButton(onPressed: sendMessage, child: const Text("send"))
-      ]),
+          SizedBox(
+              width: 10.0), // Add space between the text field and the button
+          ElevatedButton(
+            onPressed: sendMessage,
+            child: Icon(Icons.send), // Use arrow icon instead of text
+            style: ButtonStyle(
+              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(2.0),
+                ),
+              ),
+            ),
+          )
+        ]),
+      ),
     );
   }
 }
