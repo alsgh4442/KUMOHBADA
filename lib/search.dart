@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
 import 'backend.dart';
 import 'homepage.dart';
 
@@ -29,23 +29,23 @@ class _SearchPageState extends State<SearchPage> {
         elevation: 0.0,
         title: TextField(
           controller: _controller,
-          decoration: const InputDecoration(
-            prefixIcon: Icon(Icons.search),
+          onSubmitted: (value) {
+            setState(() {
+              str = value;
+            });
+          },
+          decoration: InputDecoration(
+            hintText:
+                '${context.watch<MyLocation>().getLocation} 근처에서 검색', // 디폴트 텍스트 설정
+            prefixIcon: const Icon(Icons.search),
+            fillColor: Colors.grey[200], // 배경색을 회색으로 설정
+            filled: true, // 배경색 채우기 활성화
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(25.0)),
+              borderSide: BorderSide.none, // 테두리 제거
             ),
           ),
         ),
-        actions: [
-          ElevatedButton(
-            child: const Text("검색"),
-            onPressed: () {
-              setState(() {
-                str = _controller.text;
-              });
-            },
-          ),
-        ],
       ),
       body: FutureBuilder(
         future: _item.searchItem(str: str),

@@ -30,6 +30,7 @@ const String RECEIVER = "receiver";
 const String SENDER_UID = "sender_uid";
 const String RECEIVER_UID = "receiver_uid";
 
+//provider class
 class MyLocation extends ChangeNotifier {
   String _location = MyUser.instance.getLocation!;
   String get getLocation => _location;
@@ -50,7 +51,7 @@ class MyCategory extends ChangeNotifier {
   }
 }
 
-//지역 리스트
+//리스트 변수 - 지역, 카테고리, 카테고리에 따른 이미지
 const List<String> availableLocations = [
   '전체',
   '양호동',
@@ -116,12 +117,16 @@ final Map<String, String> categoryImages = {
   '기타 중고물품': 'assets/images/others.png', // 18
 };
 
+//데이터베이스 관련 클래스들
 class MyAuth {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final MyUser _myUser = MyUser.instance;
+
+  //member variable
   final String _uri = "/UserData";
 
+  //private function
   Future _getDocs(String key, String value) async {
     //key: doc's index, value: document
     var result =
@@ -131,55 +136,21 @@ class MyAuth {
   }
 
   Future _authenticateUser(String email, String password) async {
-    try {
-      UserCredential result = await _auth.signInWithEmailAndPassword(
-          email: email, password: password);
-      User? user = result.user;
-      return user;
-    } on FirebaseAuthException {
-      return;
-    }
+    UserCredential userInfo = await _auth.signInWithEmailAndPassword(
+        email: email, password: password);
+    if (userInfo.user == null) return;
+
+    return userInfo.user!;
   }
 
   _loadUserData(String uid) async {
     var docs = await _getDocs(UID, uid);
-    if (docs == null || docs.isEmpty || docs[0] == null) {
-      print("!docs null or empty");
-      return;
-    }
+    if (docs == null || docs.isEmpty) return false;
+
     Map data = docs[0].data() as Map;
-    if (data[UID] == null || data[NICKNAME] == null || data[LOCATION] == null) {
-      print("!null from user database");
-      return;
-    }
-    if (data.isEmpty) {
-      print("!user not exist");
-      return;
-    }
+    if (data.isEmpty) return;
+
     return data;
-  }
-
-  isNicknameTaken(String nickname) async {
-    var data = await _getDocs(NICKNAME, nickname);
-    if (data == null || data.isEmpty) {
-      return false;
-    }
-    return true;
-  }
-
-  Future _verifyUser(String email, String password, String nickname) async {
-    try {
-      UserCredential userInfo = await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
-      if (userInfo.user!.email == null) {
-        print("!null from email");
-        return;
-      }
-      _auth.currentUser!.sendEmailVerification();
-      _registUser(userInfo.user!.uid, nickname, "양호동");
-    } on FirebaseAuthException catch (e) {
-      print(e.code.toString());
-    }
   }
 
   _registUser(String uid, String nickname, String location) {
@@ -193,53 +164,68 @@ class MyAuth {
     });
   }
 
-  //sign in
+  //public function
+  isNicknameTaken(String nickname) async {
+    //닉네임 중복 검사
+    var data = await _getDocs(NICKNAME, nickname);
+
+    if (data == null || data.isEmpty) return false;
+    return true;
+  }
+
+  changePassword(String newPassword) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+    try {
+      await user.updatePassword(newPassword);
+    } catch (e) {
+      return;
+    }
+    return true;
+  }
+
+  //sign function
   signIn({required String email, required String password}) async {
     User? user = await _authenticateUser(email, password);
-    if (user == null) {
-      print("!failed verifying user");
-      return;
-    }
+    if (user == null) return false;
+
     Map<String, dynamic>? data = await _loadUserData(user.uid);
-    if (data == null) {
-      print("!failed load data");
-      return;
-    }
+    if (data == null) return false;
+
     _myUser.setUser(
       uid: data[UID],
       nickname: data[NICKNAME],
       location: data[LOCATION],
       profileImage: data[PROFILE_URI],
     );
+
     return true;
   }
 
-  //sign out
   Future signOut() async => await FirebaseAuth.instance.signOut();
 
-  //sign up
-  signUp(
-      {required String email,
-      required String password,
-      required String nickname}) async {
-    if (await isNicknameTaken(nickname)) {
-      return;
-    }
-    await _verifyUser(email, password, nickname);
-  }
+  signUp({
+    required String email,
+    required String password,
+    required String nickname,
+  }) async {
+    if (await isNicknameTaken(nickname)) return false;
 
-  changePassword(String newPassword) async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    UserCredential userInfo = await _auth.createUserWithEmailAndPassword(
+        email: email, password: password);
+    if (userInfo.user == null || _auth.currentUser == null) return false;
 
-    await user.updatePassword(newPassword);
+    _auth.currentUser!.sendEmailVerification();
+    _registUser(userInfo.user!.uid, nickname, "양호동");
+    return true;
   }
 }
 
 class MyUser {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   final String _uri = "/UserData";
-  final String _profileUri = "/Profile";
+  final String _profileUri = "Profile/";
   //singleton
   MyUser._privateConstructor();
   static final MyUser _instance = MyUser._privateConstructor();
@@ -266,31 +252,66 @@ class MyUser {
     _profileImage = profileImage;
   }
 
-  updateLocation({required String location}) async {
-    _location = location;
+  _getUserDocument() async {
     QuerySnapshot snapshot =
         await _firestore.collection(_uri).where(UID, isEqualTo: _uid).get();
-    if (snapshot.docs.isEmpty) return;
+    return snapshot;
+  }
 
+  String _getUuid() {
+    Uuid uuid = const Uuid();
+    return uuid.v4();
+  }
+
+  Future _registImage(XFile image) async {
+    String str = _getUuid(); //무작위로 이름 생성
+    Reference ref = _storage.ref().child('$_profileUri$str');
+    Uint8List imageData = await image.readAsBytes();
+    await ref.putData(imageData);
+    String imageurl = await ref.getDownloadURL();
+    return imageurl;
+  }
+
+  changeLocation({required String location}) async {
+    QuerySnapshot? snapshot = await _getUserDocument();
+    if (snapshot == null || snapshot.docs.isEmpty) return;
+
+    _location = location;
     var docId = snapshot.docs.first.id;
+
     await _firestore.collection(_uri).doc(docId).update({LOCATION: _location});
   }
 
-  updateNickname({required String nickname}) async {
-    _nickname = nickname;
-    QuerySnapshot snapshot =
-        await _firestore.collection(_uri).where(UID, isEqualTo: _uid).get();
-    if (snapshot.docs.isEmpty) return;
+  changeNickname({required String nickname}) async {
+    QuerySnapshot? snapshot = await _getUserDocument();
+    if (snapshot == null || snapshot.docs.isEmpty) return;
 
+    _nickname = nickname;
     var docId = snapshot.docs.first.id;
+
     await _firestore.collection(_uri).doc(docId).update({NICKNAME: _nickname});
   }
 
+  changeProfileImage({required XFile profileImage}) async {
+    QuerySnapshot? snapshot = await _getUserDocument();
+    if (snapshot == null || snapshot.docs.isEmpty) return;
+
+    String uri = await _registImage(profileImage);
+    _profileImage = uri;
+    var docId = snapshot.docs.first.id;
+
+    await _firestore
+        .collection(_uri)
+        .doc(docId)
+        .update({PROFILE_URI: _profileImage});
+  }
+
   getOthersProfileImage({required String otherUid}) async {
-    var result =
+    QuerySnapshot snapshot =
         await _firestore.collection(_uri).where(UID, isEqualTo: otherUid).get();
-    if (result.docs.isEmpty) return;
-    return result.docs.first[PROFILE_URI];
+    if (snapshot.docs.isEmpty) return;
+
+    return snapshot.docs.first[PROFILE_URI];
   }
 }
 
@@ -318,9 +339,77 @@ class Item {
     //picker로 얻어온 이미지를 uint8list타입으로 반환
     //File(image.path)를 사용할 경우, 모바일 상에서는 동작 가능하지만, 웹 상에서 동작 안함.
     Uint8List imageData = await image.readAsBytes();
-    await ref.putData(imageData);
+    TaskSnapshot result = await ref.putData(imageData);
+    if (result.state != TaskState.success) {
+      return;
+    }
     String imageurl = await ref.getDownloadURL();
     return imageurl;
+  }
+
+  //아이템 수정
+  modifyItem(
+      {required itemId,
+      required XFile image,
+      required String title,
+      required String category,
+      required int price,
+      required String description}) async {
+    QuerySnapshot snapshot = await _firestore
+        .collection(_itemUri)
+        .where(ITEMID, isEqualTo: itemId)
+        .get();
+
+    DocumentReference docRef = snapshot.docs.first.reference;
+
+    String? url = await _registImage(image);
+    String? location = _myUser.getLocation;
+    String? nickname = _myUser.getNickname;
+    String? uid = _myUser.getUid;
+    if (location == null || nickname == null || uid == null) {
+      false;
+    }
+    if (url == null) {
+      Map<String, dynamic> item = {
+        UID: uid, //등록자의 uid
+        ITEMID: itemId,
+        TITLE: title,
+        CATEGORY: category,
+        PRICE: price,
+        DESCRIPTION: description,
+        TIMESTAMP: FieldValue.serverTimestamp(),
+        REGISTER: nickname,
+        LOCATION: location,
+      };
+      await docRef.update(item);
+    } else {
+      Map<String, dynamic> item = {
+        UID: uid, //등록자의 uid
+        ITEMID: itemId,
+        IMAGE_URI: url,
+        TITLE: title,
+        CATEGORY: category,
+        PRICE: price,
+        DESCRIPTION: description,
+        TIMESTAMP: FieldValue.serverTimestamp(),
+        REGISTER: nickname,
+        LOCATION: location,
+      };
+      await docRef.update(item);
+    }
+    return true;
+  }
+
+  //아이템 삭제
+  deleteItem({required String itemId}) async {
+    QuerySnapshot snapshot = await _firestore
+        .collection(_itemUri)
+        .where(ITEMID, isEqualTo: itemId)
+        .get();
+
+    DocumentReference docRef = snapshot.docs.first.reference;
+    docRef.delete();
+    return;
   }
 
   //아이템 등록. regist페이지에서 사용
@@ -362,6 +451,18 @@ class Item {
       return;
     }
     return image;
+  }
+
+  //단일 아이템 로드
+  getSingleItem({required String itemId}) async {
+    QuerySnapshot snapshot = await _firestore
+        .collection(_itemUri)
+        .where(ITEMID, isEqualTo: itemId)
+        .get();
+    if (snapshot.docs.isEmpty || snapshot.docs.first.data() == null) return;
+    Map<String, dynamic> item =
+        snapshot.docs.first.data() as Map<String, dynamic>;
+    return item;
   }
 
   //내 아이템만 출력
@@ -446,18 +547,12 @@ class Item {
 }
 
 class Chat {
-  final String _baseUrl = '/ChatData';
+  final String _baseUrl = '/NewChatData';
   final String _log = "chat_log";
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   MyUser myUser = MyUser._instance;
   late CollectionReference _collectionReference;
-  //채팅할 때는 한 번에 하나의 채팅방으로만 함으로 임시로 채팅방 위치를 지정해줄 변수를 생성하였음.
-
-  //파일구조
-  //chatdata 컬렉션
-  //내에 여러 문서들: 채팅방.
-  //문서 내에는 발신자, 송신자 필드와 채팅 로그 저장을 위한 컬렉션이 있음.
-  //채팅 로그 컬렉션에는 여러 문서들이 있는데, 그 문서 하나하나가 메시지임.
+  //채팅할 때는 한 번에 하나의 채팅방으로만 함. 따라서 임시로 채팅방 위치를 지정해줄 변수를 생성하였음.
 
   _getSenderIsMe() async {
     List<Map<String, dynamic>> list = [];
@@ -497,12 +592,25 @@ class Chat {
     return list;
   }
 
-  //활성화 중인 채팅창 리스트 출력을 위해
+  //활성화 중인 채팅창 리스트 출력 함수
   Future showChatList() async {
     List<Map<String, dynamic>> list = [];
     list.addAll(await _getSenderIsMe());
     list.addAll(await _getReceiverIsMe());
     return list;
+  }
+
+  //한 아이템에 대한 채팅 모두 삭제
+  deleteChat({required String itemId}) async {
+    QuerySnapshot snapshot = await _firestore
+        .collection(_baseUrl)
+        .where(ITEMID, isEqualTo: itemId)
+        .get();
+
+    for (var doc in snapshot.docs) {
+      _firestore.collection(_baseUrl).doc(doc.id).delete();
+    }
+    return;
   }
 
   //채팅창 리스트에서 요소 클릭 시 채팅방으로 넘어갈 때
@@ -527,6 +635,7 @@ class Chat {
     await _collectionReference.add({
       CONTENT: msg,
       SENDER: myUser.getNickname,
+      SENDER_UID: myUser.getUid,
       TIMESTAMP: FieldValue.serverTimestamp(),
     });
   }
@@ -535,7 +644,7 @@ class Chat {
   checkRoomExist({required Map<String, dynamic> item}) async {
     var docRef = await _firestore
         .collection(_baseUrl)
-        .doc("${myUser.getUid}_${item[UID]}_${item[ITEMID]}")
+        .doc("${myUser.getUid}_${item[ITEMID]}")
         .get();
 
     if (docRef.data() == null || docRef.data()!.isEmpty) {
@@ -548,13 +657,15 @@ class Chat {
   createChattingRoom({required Map<String, dynamic> item}) async {
     await _firestore
         .collection(_baseUrl)
-        .doc("${myUser.getUid}_${item[UID]}_${item[ITEMID]}")
+        .doc("${myUser.getUid}_${item[ITEMID]}")
         .set({
       SENDER: myUser.getNickname,
       SENDER_UID: myUser.getUid,
       RECEIVER: item[REGISTER],
       RECEIVER_UID: item[UID],
       ITEMID: item[ITEMID],
+      TITLE: item[TITLE],
+      IMAGE_URI: item[IMAGE_URI],
     });
   }
 }

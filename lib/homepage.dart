@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kumohbada_ver2/chatpage.dart';
+import 'package:kumohbada_ver2/registitempage.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
 import 'backend.dart';
 
 class HomePage extends StatefulWidget {
@@ -125,7 +125,7 @@ class _HomePageState extends State<HomePage> {
               } else {
                 return Divider(
                   height: 1,
-                  color: const Color.fromARGB(136, 73, 73, 73).withOpacity(1),
+                  color: Color.fromARGB(134, 224, 224, 224).withOpacity(1),
                   indent: 16, // 시작 부분의 공백
                   endIndent: 16, // 끝 부분의 공백
                 );
@@ -213,7 +213,7 @@ class _HomeSubPageState extends State<HomeSubPage> {
                     return Card(
                       elevation: 0,
                       child: Padding(
-                        padding: const EdgeInsets.all(15.0),
+                        padding: const EdgeInsets.all(5.0),
                         child: Text(widget.item[DESCRIPTION]),
                       ),
                     );
@@ -232,31 +232,33 @@ class _HomeSubPageState extends State<HomeSubPage> {
             bottomNavigationBar: BottomAppBar(
               elevation: 0,
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                        '가격 : ${NumberFormat('#,###', 'ko_KR').format(widget.item[PRICE])}원'),
+                      '${NumberFormat('#,###', 'ko_KR').format(widget.item[PRICE])}원',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     const Spacer(),
                     ElevatedButton(
                       onPressed: () async {
                         if (_myUser.getUid == widget.item[UID]) {
-                          return;
+                          gotoModifyPage(widget.item);
+                        } else {
+                          var result =
+                              await _chat.checkRoomExist(item: widget.item);
+                          if (!result) {
+                            //챗방이 없을 때
+                            await _chat.createChattingRoom(item: widget.item);
+                          }
+                          gotoChatting();
                         }
-                        var result =
-                            await _chat.checkRoomExist(item: widget.item);
-                        if (!result) {
-                          //챗방이 없을 때
-                          await _chat.createChattingRoom(item: widget.item);
-                        }
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (BuildContext context) {
-                            return ChatSubPage(widget.item, _myUser.getUid);
-                          }),
-                        );
                       },
-                      child: const Text("채팅하기"),
+                      child: widget.item[UID] == _myUser.getUid
+                          ? const Text("수정하기")
+                          : const Text("채팅하기"),
                     )
                   ],
                 ),
@@ -264,5 +266,23 @@ class _HomeSubPageState extends State<HomeSubPage> {
             ),
           );
         });
+  }
+
+  gotoChatting() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (BuildContext context) {
+        return ChatSubPage(widget.item, _myUser.getUid);
+      }),
+    );
+  }
+
+  gotoModifyPage(Map<String, dynamic> item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (BuildContext context) {
+        return ModifyItemPage(item);
+      }),
+    );
   }
 }

@@ -14,6 +14,7 @@ class MyItemPage extends StatefulWidget {
 
 class _MyItemPageState extends State<MyItemPage> {
   Item _item = Item();
+  Chat _chat = Chat();
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +31,7 @@ class _MyItemPageState extends State<MyItemPage> {
                 itemBuilder: (BuildContext context, int index) {
                   DateTime date = snapshot.data![index][TIMESTAMP].toDate();
                   String formattedTime = timeago.format(date, locale: 'ko');
+
                   return Card(
                     elevation: 0,
                     child: InkWell(
@@ -89,6 +91,16 @@ class _MyItemPageState extends State<MyItemPage> {
                                   ),
                                 ],
                               ),
+                            ),
+                            IconButton(
+                              onPressed: () async {
+                                await _chat.deleteChat(
+                                    itemId: snapshot.data![index][ITEMID]);
+                                await _item.deleteItem(
+                                    itemId: snapshot.data![index][ITEMID]);
+                                setState(() {});
+                              },
+                              icon: const Icon(Icons.delete),
                             ),
                           ],
                         ),

@@ -34,7 +34,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _updateNickname() {
     _showPopup('닉네임이 변경되었습니다.', true);
-    _myUser.updateNickname(nickname: _nicknameController.text);
+    _myUser.changeNickname(nickname: _nicknameController.text);
     setState(() {
       _nicknameController.clear();
     });
@@ -130,7 +130,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       : _showPopup("이미 존재하는 닉네임입니다", false);
                 },
                 child: const Text('닉네임 변경'),
+                style: ButtonStyle(
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                ),
               ),
+
               const SizedBox(height: 32),
               Row(children: [
                 const Spacer(),
@@ -144,12 +152,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   height: 30,
                   child: DropdownButton<String>(
                     value: context.watch<MyLocation>().getLocation,
-                    onChanged: (String? newValue) {
+                    onChanged: (String? newValue) async {
                       if (newValue == null) return;
                       context
                           .read<MyLocation>()
                           .changeLocation(location: newValue);
-                      _myUser.updateLocation(location: newValue);
+                      await _myUser.changeLocation(location: newValue);
+                      setState(() {});
                     },
                     items: availableLocations
                         .map<DropdownMenuItem<String>>((String value) {
@@ -210,6 +219,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   _showPopup("변경 성공!", true);
                 },
                 child: const Text('비밀번호 변경'),
+                style: ButtonStyle(
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                          10.0), // 이 값을 10으로 설정하여 모서리를 둥글게 만들었습니다.
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
