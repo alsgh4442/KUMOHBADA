@@ -1,6 +1,6 @@
 # kumohbada
 
-A new Flutter project.
+2023-2 오픈소스 프로젝트 - 플러터 기반 당근마켓 클론 프로젝트.
 
 ## Getting Started
 
